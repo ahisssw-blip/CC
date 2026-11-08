@@ -1,0 +1,5 @@
+telethon
+cryptg
+python-dotenv
+requests
+pytest

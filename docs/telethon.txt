@@ -1,0 +1,5613 @@
+
+=== File: ./telethon-docs/index.rst ===
+
+      
+Telethon's Documentation
+      
+
+ 
+
+   from telethon.sync import TelegramClient, events
+
+   with TelegramClient('name', api_id, api_hash) as client:
+      client.send_message('me', 'Hello, myself!')
+      print(client.download_profile_photo('me'))
+
+      @client.on(events.NewMessage(pattern='(?i).*Hello'))
+      async def handler(event):
+         await event.reply('Hey!')
+
+      client.run_until_disconnected()
+
+
+* Are you new here? Jump straight into :ref:`installation`!
+* Looking for the method reference? See :ref:`client-ref`.
+* Did you upgrade the library? Please read :ref:`changelog`.
+* Used Telethon before v1.0? See :ref:`compatibility-and-convenience`.
+* Coming from Bot API or want to create new bots? See :ref:`botapi`.
+* Need the full API reference? https://tl.telethon.dev/.
+
+
+What is this?
+-------------
+
+Telegram is a popular messaging application. This library is meant
+to make it easy for you to write Python programs that can interact
+with Telegram. Think of it as a wrapper that has already done the
+heavy job for you, so you can focus on developing an application.
+
+
+How should I use the documentation?
+-----------------------------------
+
+If you are getting started with the library, you should follow the
+documentation in order by pressing the "Next" button at the bottom-right
+of every page.
+
+You can also use the menu on the left to quickly skip over sections.
+
+.. toctree::
+    :hidden:
+    :caption: First Steps
+
+    basic/installation
+    basic/signing-in
+    basic/quick-start
+    basic/updates
+    basic/next-steps
+
+.. toctree::
+    :hidden:
+    :caption: Quick References
+
+    quick-references/faq
+    quick-references/client-reference
+    quick-references/events-reference
+    quick-references/objects-reference
+
+.. toctree::
+    :hidden:
+    :caption: Concepts
+
+    concepts/strings
+    concepts/entities
+    concepts/chats-vs-channels
+    concepts/updates
+    concepts/sessions
+    concepts/full-api
+    concepts/errors
+    concepts/botapi-vs-mtproto
+    concepts/asyncio
+
+.. toctree::
+    :hidden:
+    :caption: Full API Examples
+
+    examples/word-of-warning
+    examples/chats-and-channels
+    examples/users
+    examples/working-with-messages
+
+.. toctree::
+    :hidden:
+    :caption: Developing
+
+    developing/philosophy.rst
+    developing/test-servers.rst
+    developing/project-structure.rst
+    developing/coding-style.rst
+    developing/testing.rst
+    developing/understanding-the-type-language.rst
+    developing/tips-for-porting-the-project.rst
+    developing/telegram-api-in-other-languages.rst
+
+.. toctree::
+    :hidden:
+    :caption: Miscellaneous
+
+    misc/changelog
+    misc/wall-of-shame.rst
+    misc/compatibility-and-convenience
+
+.. toctree::
+    :hidden:
+    :caption: Telethon Modules
+
+    modules/client
+    modules/events
+    modules/custom
+    modules/utils
+    modules/errors
+    modules/sessions
+    modules/network
+    modules/helpers
+
+
+
+
+=== File: ./telethon-docs/basic/signing-in.rst ===
+
+.. _signing-in:
+
+  ==
+Signing In
+  ==
+
+Before working with Telegram's API, you need to get your own API ID and hash:
+
+1. `Login to your Telegram account <https://my.telegram.org/>`_ with the
+   phone number of the developer account to use.
+
+2. Click under API Development tools.
+
+3. A *Create new application* window will appear. Fill in your application
+   details. There is no need to enter any *URL*, and only the first two
+   fields (*App title* and *Short name*) can currently be changed later.
+
+4. Click on *Create application* at the end. Remember that your
+   **API hash is secret** and Telegram won't let you revoke it.
+   Don't post it anywhere!
+
+.. note::
+
+    This API ID and hash is the one used by *your application*, not your
+    phone number. You can use this API ID and hash with *any* phone number
+    or even for bot accounts.
+
+
+Editing the Code
+    
+
+This is a little introduction for those new to Python programming in general.
+
+We will write our code inside ``hello.py``, so you can use any text
+editor that you like. To run the code, use ``python3 hello.py`` from
+the terminal.
+
+.. important::
+
+    Don't call your script ``telethon.py``! Python will try to import
+    the client from there and it will fail with an error such as
+    "ImportError: cannot import name 'TelegramClient' ...".
+
+
+Signing In
+  ==
+
+We can finally write some code to log into our account!
+
+ 
+
+    from telethon import TelegramClient
+
+    # Use your own values from my.telegram.org
+    api_id = 12345
+    api_hash = '0123456789abcdef0123456789abcdef'
+
+    # The first parameter is the .session file name (absolute paths allowed)
+    with TelegramClient('anon', api_id, api_hash) as client:
+        client.loop.run_until_complete(client.send_message('me', 'Hello, myself!'))
+
+
+In the first line, we import the class name so we can create an instance
+of the client. Then, we define variables to store our API ID and hash
+conveniently.
+
+At last, we create a new `TelegramClient <telethon.client.telegramclient.TelegramClient>`
+instance and call it ``client``. We can now use the client variable
+for anything that we want, such as sending a message to ourselves.
+
+.. note::
+
+    Since Telethon is an asynchronous library, you need to ``await``
+    coroutine functions to have them run (or otherwise, run the loop
+    until they are complete). In this tiny example, we don't bother
+    making an ``async def main()``.
+
+    See :ref:`mastering-asyncio` to find out more.
+
+
+Using a ``with`` block is the preferred way to use the library. It will
+automatically `start() <telethon.client.auth.AuthMethods.start>` the client,
+logging or signing up if necessary.
+
+If the ``.session`` file already existed, it will not login
+again, so be aware of this if you move or rename the file!
+
+
+Signing In as a Bot Account
+      ===
+
+You can also use Telethon for your bots (normal bot accounts, not users).
+You will still need an API ID and hash, but the process is very similar:
+
+
+ 
+
+    from telethon.sync import TelegramClient
+
+    api_id = 12345
+    api_hash = '0123456789abcdef0123456789abcdef'
+    bot_token = '12345:0123456789abcdef0123456789abcdef'
+
+    # We have to manually call "start" if we want an explicit bot token
+    bot = TelegramClient('bot', api_id, api_hash).start(bot_token=bot_token)
+
+    # But then we can use the client instance as usual
+    with bot:
+        ...
+
+
+To get a bot account, you need to talk
+with `@BotFather <https://t.me/BotFather>`_.
+
+
+Signing In behind a Proxy
+      =
+
+If you need to use a proxy to access Telegram,
+you will need to either:
+
+* For Python >= 3.6 : `install python-socks[asyncio]`__
+* For Python <= 3.5 : `install PySocks`__
+
+and then change
+
+ 
+
+    TelegramClient('anon', api_id, api_hash)
+
+with
+
+ 
+
+    TelegramClient('anon', api_id, api_hash, proxy=("socks5", '127.0.0.1', 4444))
+
+(of course, replacing the protocol, IP and port with the protocol, IP and port of the proxy).
+
+The ``proxy=`` argument should be a dict (or tuple, for backwards compatibility),
+consisting of parameters described `in PySocks usage`__.
+
+The allowed values for the argument ``proxy_type`` are:
+
+* For Python <= 3.5:
+    * ``socks.SOCKS5`` or ``'socks5'``
+    * ``socks.SOCKS4`` or ``'socks4'``
+    * ``socks.HTTP`` or ``'http'``
+
+* For Python >= 3.6:
+    * All of the above
+    * ``python_socks.ProxyType.SOCKS5``
+    * ``python_socks.ProxyType.SOCKS4``
+    * ``python_socks.ProxyType.HTTP``
+
+
+Example:
+
+ 
+
+    proxy = {
+        'proxy_type': 'socks5', # (mandatory) protocol to use (see above)
+        'addr': '1.1.1.1',      # (mandatory) proxy IP address
+        'port': 5555,           # (mandatory) proxy port number
+        'username': 'foo',      # (optional) username if the proxy requires auth
+        'password': 'bar',      # (optional) password if the proxy requires auth
+        'rdns': True            # (optional) whether to use remote or local resolve, default remote
+    }
+
+For backwards compatibility with ``PySocks`` the following format
+is possible (but discouraged):
+
+ 
+
+    proxy = (socks.SOCKS5, '1.1.1.1', 5555, True, 'foo', 'bar')
+
+.. __: https://github.com/romis2012/python-socks#installation
+.. __: https://github.com/Anorov/PySocks#installation
+.. __: https://github.com/Anorov/PySocks#usage-1
+
+
+Using MTProto Proxies
+     =
+
+MTProto Proxies are Telegram's alternative to normal proxies,
+and work a bit differently. The following protocols are available:
+
+* ``ConnectionTcpMTProxyAbridged``
+* ``ConnectionTcpMTProxyIntermediate``
+* ``ConnectionTcpMTProxyRandomizedIntermediate`` (preferred)
+
+For now, you need to manually specify these special connection modes
+if you want to use a MTProto Proxy. Your code would look like this:
+
+ 
+
+    from telethon import TelegramClient, connection
+    #   we need to change the connection ^^^^^^^^^^
+
+    client = TelegramClient(
+        'anon',
+        api_id,
+        api_hash,
+
+        # Use one of the available connection modes.
+        # Normally, this one works with most proxies.
+        connection=connection.ConnectionTcpMTProxyRandomizedIntermediate,
+
+        # Then, pass the proxy details as a tuple:
+        #     (host name, port, proxy secret)
+        #
+        # If the proxy has no secret, the secret must be:
+        #     '00000000000000000000000000000000'
+        proxy=('mtproxy.example.com', 2002, 'secret')
+    )
+
+In future updates, we may make it easier to use MTProto Proxies
+(such as avoiding the need to manually pass ``connection=``).
+
+In short, the same code above but without comments to make it clearer:
+
+ 
+
+    from telethon import TelegramClient, connection
+
+    client = TelegramClient(
+        'anon', api_id, api_hash,
+        connection=connection.ConnectionTcpMTProxyRandomizedIntermediate,
+        proxy=('mtproxy.example.com', 2002, 'secret')
+    )
+
+
+
+
+=== File: ./telethon-docs/basic/quick-start.rst ===
+
+  ===
+Quick-Start
+  ===
+
+Let's see a longer example to learn some of the methods that the library
+has to offer. These are known as "friendly methods", and you should always
+use these if possible.
+
+ 
+
+    from telethon import TelegramClient
+
+    # Remember to use your own values from my.telegram.org!
+    api_id = 12345
+    api_hash = '0123456789abcdef0123456789abcdef'
+    client = TelegramClient('anon', api_id, api_hash)
+
+    async def main():
+        # Getting information about yourself
+        me = await client.get_me()
+
+        # "me" is a user object. You can pretty-print
+        # any Telegram object with the "stringify" method:
+        print(me.stringify())
+
+        # When you print something, you see a representation of it.
+        # You can access all attributes of Telegram objects with
+        # the dot operator. For example, to get the username:
+        username = me.username
+        print(username)
+        print(me.phone)
+
+        # You can print all the dialogs/conversations that you are part of:
+        async for dialog in client.iter_dialogs():
+            print(dialog.name, 'has ID', dialog.id)
+
+        # You can send messages to yourself...
+        await client.send_message('me', 'Hello, myself!')
+        # ...to some chat ID
+        await client.send_message(-100123456, 'Hello, group!')
+        # ...to your contacts
+        await client.send_message('+34600123123', 'Hello, friend!')
+        # ...or even to any username
+        await client.send_message('username', 'Testing Telethon!')
+
+        # You can, of course, use markdown in your messages:
+        message = await client.send_message(
+            'me',
+            'This message has **bold**, `code`, __italics__ and '
+            'a [nice website](https://example.com)!',
+            link_preview=False
+        )
+
+        # Sending a message returns the sent message object, which you can use
+        print(message.raw_text)
+
+        # You can reply to messages directly if you have a message object
+        await message.reply('Cool!')
+
+        # Or send files, songs, documents, albums...
+        await client.send_file('me', '/home/me/Pictures/holidays.jpg')
+
+        # You can print the message history of any chat:
+        async for message in client.iter_messages('me'):
+            print(message.id, message.text)
+
+            # You can download media from messages, too!
+            # The method will return the path where the file was saved.
+            if message.photo:
+                path = await message.download_media()
+                print('File saved to', path)  # printed after download is done
+
+    with client:
+        client.loop.run_until_complete(main())
+
+
+Here, we show how to sign in, get information about yourself, send
+messages, files, getting chats, printing messages, and downloading
+files.
+
+You should make sure that you understand what the code shown here
+does, take note on how methods are called and used and so on before
+proceeding. We will see all the available methods later on.
+
+.. important::
+
+    Note that Telethon is an asynchronous library, and as such, you should
+    get used to it and learn a bit of basic `asyncio`. This will help a lot.
+    As a quick start, this means you generally want to write all your code
+    inside some ``async def`` like so:
+
+     
+
+        client = ...
+
+        async def do_something(me):
+            ...
+
+        async def main():
+            # Most of your code should go here.
+            # You can of course make and use your own async def (do_something).
+            # They only need to be async if they need to await things.
+            me = await client.get_me()
+            await do_something(me)
+
+        with client:
+            client.loop.run_until_complete(main())
+
+    After you understand this, you may use the ``telethon.sync`` hack if you
+    want do so (see :ref:`compatibility-and-convenience`), but note you may
+    run into other issues (iPython, Anaconda, etc. have some issues with it).
+
+
+
+
+=== File: ./telethon-docs/basic/next-steps.rst ===
+
+  ==
+Next Steps
+  ==
+
+These basic first steps should have gotten you started with the library.
+
+By now, you should know how to call friendly methods and how to work with
+the returned objects, how things work inside event handlers, etc.
+
+Next, we will see a quick reference summary of *all* the methods and
+properties that you will need when using the library. If you follow
+the links there, you will expand the documentation for the method
+and property, with more examples on how to use them.
+
+Therefore, **you can find an example on every method** of the client
+to learn how to use it, as well as a description of all the arguments.
+
+After that, we will go in-depth with some other important concepts
+that are worth learning and understanding.
+
+From now on, you can keep pressing the "Next" button if you want,
+or use the menu on the left, since some pages are quite lengthy.
+
+A note on developing applications
+        =
+
+If you're using the library to make an actual application (and not just
+automate things), you should make sure to `comply with the ToS`__:
+
+    […] when logging in as an existing user, apps are supposed to call
+    [:tl:`GetTermsOfServiceUpdate`] to check for any updates to the Terms of
+    Service; this call should be repeated after ``expires`` seconds have
+    elapsed. If an update to the Terms Of Service is available, clients are
+    supposed to show a consent popup; if accepted, clients should call
+    [:tl:`AcceptTermsOfService`], providing the ``termsOfService id`` JSON
+    object; in case of denial, clients are to delete the account using
+    [:tl:`DeleteAccount`], providing Decline ToS update as deletion reason.
+
+.. __: https://core.telegram.org/api/config#terms-of-service
+
+However, if you use the library to automate or enhance your Telegram
+experience, it's very likely that you are using other applications doing this
+check for you (so you wouldn't run the risk of violating the ToS).
+
+The library itself will not automatically perform this check or accept the ToS
+because it should require user action (the only exception is during sign-up).
+
+
+
+
+=== File: ./telethon-docs/basic/installation.rst ===
+
+.. _installation:
+
+   
+Installation
+   
+
+Telethon is a Python library, which means you need to download and install
+Python from https://www.python.org/downloads/ if you haven't already. Once
+you have Python installed, `upgrade pip`__ and run:
+
+.. code-block:: sh
+
+    python3 -m pip install --upgrade pip
+    python3 -m pip install --upgrade telethon
+
+…to install or upgrade the library to the latest version.
+
+.. __: https://pythonspeed.com/articles/upgrade-pip/
+
+Installing Development Versions
+       ===
+
+If you want the *latest* unreleased changes,
+you can run the following command instead:
+
+.. code-block:: sh
+
+    python3 -m pip install --upgrade https://github.com/LonamiWebs/Telethon/archive/v1.zip
+
+.. note::
+
+    The development version may have bugs and is not recommended for production
+    use. However, when you are `reporting a library bug`__, you should try if the
+    bug still occurs in this version.
+
+.. __: https://github.com/LonamiWebs/Telethon/issues/
+
+
+Verification
+   
+
+To verify that the library is installed correctly, run the following command:
+
+.. code-block:: sh
+
+    python3 -c "import telethon; print(telethon.__version__)"
+
+The version number of the library should show in the output.
+
+
+Optional Dependencies
+     =
+
+If cryptg_ is installed, **the library will work a lot faster**, since
+encryption and decryption will be made in C instead of Python. If your
+code deals with a lot of updates or you are downloading/uploading a lot
+of files, you will notice a considerable speed-up (from a hundred kilobytes
+per second to several megabytes per second, if your connection allows it).
+If it's not installed, pyaes_ will be used (which is pure Python, so it's
+much slower).
+
+If pillow_ is installed, large images will be automatically resized when
+sending photos to prevent Telegram from failing with "invalid image".
+Official clients also do this.
+
+If aiohttp_ is installed, the library will be able to download
+:tl:`WebDocument` media files (otherwise you will get an error).
+
+If hachoir_ is installed, it will be used to extract metadata from files
+when sending documents. Telegram uses this information to show the song's
+performer, artist, title, duration, and for videos too (including size).
+Otherwise, they will default to empty values, and you can set the attributes
+manually.
+
+.. note::
+
+    Some of the modules may require additional dependencies before being
+    installed through ``pip``. If you have an ``apt``-based system, consider
+    installing the most commonly missing dependencies (with the right ``pip``):
+
+    .. code-block:: sh
+
+        apt update
+        apt install clang lib{jpeg-turbo,webp}-dev python{,-dev} zlib-dev
+        pip install -U --user setuptools
+        pip install -U --user telethon cryptg pillow
+
+    Thanks to `@bb010g`_ for writing down this nice list.
+
+
+.. _cryptg: https://github.com/cher-nov/cryptg
+.. _pyaes: https://github.com/ricmoo/pyaes
+.. _pillow: https://python-pillow.org
+.. _aiohttp: https://docs.aiohttp.org
+.. _hachoir: https://hachoir.readthedocs.io
+.. _@bb010g: https://static.bb010g.com
+
+
+
+
+=== File: ./telethon-docs/basic/updates.rst ===
+
+ ===
+Updates
+ ===
+
+Updates are an important topic in a messaging platform like Telegram.
+After all, you want to be notified when a new message arrives, when
+a member joins, when someone starts typing, etc.
+For that, you can use **events**.
+
+.. important::
+
+    It is strongly advised to enable logging when working with events,
+    since exceptions in event handlers are hidden by default. Please
+    add the following snippet to the very top of your file:
+
+     
+
+        import logging
+        logging.basicConfig(format='[%(levelname) %(asctime)s] %(name)s: %(message)s',
+                            level=logging.WARNING)
+
+
+Getting Started
+   ===
+
+Let's start things with an example to automate replies:
+
+ 
+
+    from telethon import TelegramClient, events
+
+    client = TelegramClient('anon', api_id, api_hash)
+
+    @client.on(events.NewMessage)
+    async def my_event_handler(event):
+        if 'hello' in event.raw_text:
+            await event.reply('hi!')
+
+    client.start()
+    client.run_until_disconnected()
+
+
+This code isn't much, but there might be some things unclear.
+Let's break it down:
+
+ 
+
+    from telethon import TelegramClient, events
+
+    client = TelegramClient('anon', api_id, api_hash)
+
+
+This is normal creation (of course, pass session name, API ID and hash).
+Nothing we don't know already.
+
+ 
+
+    @client.on(events.NewMessage)
+
+
+This Python decorator will attach itself to the ``my_event_handler``
+definition, and basically means that *on* a `NewMessage
+<telethon.events.newmessage.NewMessage>` *event*,
+the callback function you're about to define will be called:
+
+ 
+
+    async def my_event_handler(event):
+        if 'hello' in event.raw_text:
+            await event.reply('hi!')
+
+
+If a `NewMessage
+<telethon.events.newmessage.NewMessage>` event occurs,
+and ``'hello'`` is in the text of the message, we `reply()
+<telethon.tl.custom.message.Message.reply>` to the event
+with a ``'hi!'`` message.
+
+.. note::
+
+    Event handlers **must** be ``async def``. After all,
+    Telethon is an asynchronous library based on `asyncio`,
+    which is a safer and often faster approach to threads.
+
+    You **must** ``await`` all method calls that use
+    network requests, which is most of them.
+
+
+More Examples
+   =
+
+Replying to messages with hello is fun, but, can we do more?
+
+ 
+
+    @client.on(events.NewMessage(outgoing=True, pattern=r'\.save'))
+    async def handler(event):
+        if event.is_reply:
+            replied = await event.get_reply_message()
+            sender = replied.sender
+            await client.download_profile_photo(sender)
+            await event.respond('Saved your photo {}'.format(sender.username))
+
+We could also get replies. This event filters outgoing messages
+(only those that we send will trigger the method), then we filter
+by the regex ``r'\.save'``, which will match messages starting
+with ``".save"``.
+
+Inside the method, we check whether the event is replying to another message
+or not. If it is, we get the reply message and the sender of that message,
+and download their profile photo.
+
+Let's delete messages which contain "heck". We don't allow swearing here.
+
+ 
+
+    @client.on(events.NewMessage(pattern=r'(?i).*heck'))
+    async def handler(event):
+        await event.delete()
+
+
+With the ``r'(?i).*heck'`` regex, we match case-insensitive
+"heck" anywhere in the message. Regex is very powerful and you
+can learn more at https://regexone.com/.
+
+So far, we have only seen the `NewMessage
+<telethon.events.newmessage.NewMessage>`, but there are many more
+which will be covered later. This is only a small introduction to updates.
+
+Entities
+  
+
+When you need the user or chat where an event occurred, you **must** use
+the following methods:
+
+ 
+
+    async def handler(event):
+        # Good
+        chat = await event.get_chat()
+        sender = await event.get_sender()
+        chat_id = event.chat_id
+        sender_id = event.sender_id
+
+        # BAD. Don't do this
+        chat = event.chat
+        sender = event.sender
+        chat_id = event.chat.id
+        sender_id = event.sender.id
+
+Events are like messages, but don't have all the information a message has!
+When you manually get a message, it will have all the information it needs.
+When you receive an update about a message, it **won't** have all the
+information, so you have to **use the methods**, not the properties.
+
+Make sure you understand the code seen here before continuing!
+As a rule of thumb, remember that new message events behave just
+like message objects, so you can do with them everything you can
+do with a message object.
+
+
+
+
+=== File: ./telethon-docs/examples/users.rst ===
+
+ =
+Users
+ =
+
+
+.. note::
+
+    These examples assume you have read :ref:`full-api`.
+
+.. contents::
+
+
+Retrieving full information
+      ===
+
+If you need to retrieve the bio, biography or about information for a user
+you should use :tl:`GetFullUser`:
+
+
+ 
+
+    from telethon.tl.functions.users import GetFullUserRequest
+
+    full = await client(GetFullUserRequest(user))
+    # or even
+    full = await client(GetFullUserRequest('username'))
+
+    bio = full.full_user.about
+
+
+See :tl:`UserFull` to know what other fields you can access.
+
+
+Updating your name and/or bio
+       =
+
+The first name, last name and bio (about) can all be changed with the same
+request. Omitted fields won't change after invoking :tl:`UpdateProfile`:
+
+ 
+
+    from telethon.tl.functions.account import UpdateProfileRequest
+
+    await client(UpdateProfileRequest(
+        about='This is a test from Telethon'
+    ))
+
+
+Updating your username
+     ==
+
+You need to use :tl:`account.UpdateUsername`:
+
+ 
+
+    from telethon.tl.functions.account import UpdateUsernameRequest
+
+    await client(UpdateUsernameRequest('new_username'))
+
+
+Updating your profile photo
+      ===
+
+The easiest way is to upload a new file and use that as the profile photo
+through :tl:`UploadProfilePhoto`:
+
+
+ 
+
+    from telethon.tl.functions.photos import UploadProfilePhotoRequest
+
+    await client(UploadProfilePhotoRequest(
+        await client.upload_file('/path/to/some/file')
+    ))
+
+
+
+
+=== File: ./telethon-docs/examples/chats-and-channels.rst ===
+
+       ===
+Working with Chats and Channels
+       ===
+
+
+.. note::
+
+    These examples assume you have read :ref:`full-api`.
+
+.. contents::
+
+
+Joining a chat or channel
+      =
+
+Note that :tl:`Chat` are normal groups, and :tl:`Channel` are a
+special form of :tl:`Chat`, which can also be super-groups if
+their ``megagroup`` member is `True`.
+
+
+Joining a public channel
+      
+
+Once you have the :ref:`entity <entities>` of the channel you want to join
+to, you can make use of the :tl:`JoinChannelRequest` to join such channel:
+
+ 
+
+    from telethon.tl.functions.channels import JoinChannelRequest
+    await client(JoinChannelRequest(channel))
+
+    # In the same way, you can also leave such channel
+    from telethon.tl.functions.channels import LeaveChannelRequest
+    await client(LeaveChannelRequest(input_channel))
+
+
+For more on channels, check the `channels namespace`__.
+
+
+__ https://tl.telethon.dev/methods/channels/index.html
+
+
+Joining a private chat or channel
+        =
+
+If all you have is a link like this one:
+``https://t.me/joinchat/AAAAAFFszQPyPEZ7wgxLtd``, you already have
+enough information to join! The part after the
+``https://t.me/joinchat/``, this is, ``AAAAAFFszQPyPEZ7wgxLtd`` on this
+example, is the ``hash`` of the chat or channel. Now you can use
+:tl:`ImportChatInviteRequest` as follows:
+
+ 
+
+    from telethon.tl.functions.messages import ImportChatInviteRequest
+    updates = await client(ImportChatInviteRequest('AAAAAEHbEkejzxUjAUCfYg'))
+
+
+Adding someone else to such chat or channel
+          ===
+
+If you don't want to add yourself, maybe because you're already in,
+you can always add someone else with the :tl:`AddChatUserRequest`, which
+use is very straightforward, or :tl:`InviteToChannelRequest` for channels:
+
+ 
+
+    # For normal chats
+    from telethon.tl.functions.messages import AddChatUserRequest
+
+    # Note that ``user_to_add`` is NOT the name of the parameter.
+    # It's the user you want to add (``user_id=user_to_add``).
+    await client(AddChatUserRequest(
+        chat_id,
+        user_to_add,
+        fwd_limit=10  # Allow the user to see the 10 last messages
+    ))
+
+    # For channels (which includes megagroups)
+    from telethon.tl.functions.channels import InviteToChannelRequest
+
+    await client(InviteToChannelRequest(
+        channel,
+        [users_to_add]
+    ))
+
+Note that this method will only really work for friends or bot accounts.
+Trying to mass-add users with this approach will not work, and can put both
+your account and group to risk, possibly being flagged as spam and limited.
+
+
+Checking a link without joining
+       ===
+
+If you don't need to join but rather check whether it's a group or a
+channel, you can use the :tl:`CheckChatInviteRequest`, which takes in
+the hash of said channel or group.
+
+
+Increasing View Count in a Channel
+        ==
+
+It has been asked `quite`__ `a few`__ `times`__ (really, `many`__), and
+while I don't understand why so many people ask this, the solution is to
+use :tl:`GetMessagesViewsRequest`, setting ``increment=True``:
+
+ 
+
+
+    # Obtain `channel' through dialogs or through client.get_entity() or anyhow.
+    # Obtain `msg_ids' through `.get_messages()` or anyhow. Must be a list.
+
+    await client(GetMessagesViewsRequest(
+        peer=channel,
+        id=msg_ids,
+        increment=True
+    ))
+
+
+Note that you can only do this **once or twice a day** per account,
+running this in a loop will obviously not increase the views forever
+unless you wait a day between each iteration. If you run it any sooner
+than that, the views simply won't be increased.
+
+__ https://github.com/LonamiWebs/Telethon/issues/233
+__ https://github.com/LonamiWebs/Telethon/issues/305
+__ https://github.com/LonamiWebs/Telethon/issues/409
+__ https://github.com/LonamiWebs/Telethon/issues/447
+
+
+
+
+=== File: ./telethon-docs/concepts/full-api.rst ===
+
+.. _full-api:
+
+   
+The Full API
+   
+
+.. important::
+
+    While you have access to this, you should always use the friendly
+    methods listed on :ref:`client-ref` unless you have a better reason
+    not to, like a method not existing or you wanting more control.
+
+.. contents::
+
+
+Introduction
+   
+
+The :ref:`telethon-client` doesn't offer a method for every single request
+the Telegram API supports. However, it's very simple to *call* or *invoke*
+any request defined in Telegram's API.
+
+This section will teach you how to use what Telethon calls the `TL reference`_.
+The linked page contains a list and a way to search through *all* types
+generated from the definition of Telegram's API (in ``.tl`` file format,
+hence the name). These types include requests and constructors.
+
+.. note::
+
+    The reason to keep both https://tl.telethon.dev and this
+    documentation alive is that the former allows instant search results
+    as you type, and a "Copy import" button. If you like namespaces, you
+    can also do ``from telethon.tl import types, functions``. Both work.
+
+Telegram makes these ``.tl`` files public, which other implementations, such
+as Telethon, can also use to generate code. These files are versioned under
+what's called "layers". ``.tl`` files consist of thousands of definitions,
+and newer layers often add, change, or remove them. Each definition refers
+to either a Remote Procedure Call (RPC) function, or a type (which the
+`TL reference`_ calls "constructors", as they construct particular type
+instances).
+
+As such, the `TL reference`_ is a good place to go to learn about all possible
+requests, types, and what they look like. If you're curious about what's been
+changed between layers, you can refer to the `TL diff`_ site.
+
+
+Navigating the TL reference
+      ===
+
+Functions
+---------
+
+"Functions" is the term used for the Remote Procedure Calls (RPC) that can be
+sent to Telegram to ask it to perform something (e.g. "send message"). These
+requests have an associated return type. These can be invoked ("called"):
+
+ 
+
+    client = TelegramClient(...)
+    function_instance = SomeRequest(...)
+
+    # Invoke the request
+    returned_type = await client(function_instance)
+
+Whenever you find the type for a function in the `TL reference`_, the page
+will contain the following information:
+
+* What type of account can use the method. This information is regenerated
+  from time to time (by attempting to invoke the function under both account
+  types and finding out where it fails). Some requests can only be used by
+  bot accounts, others by user accounts, and others by both.
+* The TL definition. This helps you get a feel for the what the function
+  looks like. This is not Python code. It just contains the definition in
+  a concise manner.
+* "Copy import" button. Does what it says: it will copy the necessary Python
+  code to import the function to your system's clipboard for easy access.
+* Returns. The returned type. When you invoke the function, this is what the
+  result will be. It also includes which of the constructors can be returned
+  inline, to save you a click.
+* Parameters. The parameters accepted by the function, including their type,
+  whether they expect a list, and whether they're optional.
+* Known RPC errors. A best-effort list of known errors the request may cause.
+  This list is not complete and may be out of date, but should provide an
+  overview of what could go wrong.
+* Example. Autogenerated example, showcasing how you may want to call it.
+  Bear in mind that this is *autogenerated*. It may be spitting out non-sense.
+  The goal of this example is not to show you everything you can do with the
+  request, only to give you a feel for what it looks like to use it.
+
+It is very important to click through the links and navigate to get the full
+picture. A specific page will show you what the specific function returns and
+needs as input parameters. But it may reference other types, so you need to
+navigate to those to learn what those contain or need.
+
+Types
+-----
+
+"Types" as understood by TL are not actually generated in Telethon.
+They would be the "abstract base class" of the constructors, but since Python
+is duck-typed, there is hardly any need to generate mostly unnecessary code.
+The page for a type contains:
+
+* Constructors. Every type will have one or more constructors. These
+  constructors *are* generated and can be immported and used.
+* Requests returning this type. A helpful way to find out "what requests can
+  return this?". This is how you may learn what request you need to use to
+  obtain a particular instance of a type.
+* Requests accepting this type as input. A helpful way to find out "what
+  requests can use this type as one of their input parameters?". This is how
+  you may learn where a type is used.
+* Other types containing this type. A helpful way to find out "where else
+  does this type appear?". This is how you can walk back through nested
+  objects.
+
+Constructors
+------------
+
+Constructors are used to create instances of a particular type, and are also
+returned when invoking requests. You will have to create instances yourself
+when invoking requests that need a particular type as input.
+The page for a constructor contains:
+
+* Belongs to. The parent type. This is a link back to the types page for the
+  specific constructor. It also contains the sibling constructors inline, to
+  save you a click.
+* Members. Both the input parameters *and* fields the constructor contains.
+
+
+Using the TL reference
+     ==
+
+After you've found a request you want to send, a good start would be to simply
+copy and paste the autogenerated example into your script. Then you can simply
+tweak it to your needs.
+
+If you want to do it from scratch, first, make sure to import the request into
+your code (either using the "Copy import" button near the top, or by manually
+spelling out the package under ``telethon.tl.functions.*``).
+
+Then, start reading the parameters one by one. If the parameter cannot be
+omitted, you **will** need to specify it, so make sure to spell it out as
+an input parameter when constructing the request instance. Let's look at
+`PingRequest`_ for example. First, we copy the import:
+
+ 
+
+    from telethon.tl.functions import PingRequest
+
+Then, we look at the parameters:
+
+    ping_id - long
+
+A single parameter, and it's a long (a integer number with a large range of
+values). It doesn't say it can be omitted, so we must provide it, like so:
+
+ 
+
+    PingRequest(
+        ping_id=48641868471
+    )
+
+(In this case, the ping ID is a random number. You often have to guess what
+the parameter needs just by looking at the name.)
+
+Now that we have our request, we can invoke it:
+
+ 
+
+    response = await client(PingRequest(
+        ping_id=48641868471
+    ))
+
+To find out what ``response`` looks like, we can do as the autogenerated
+example suggests and "stringify" the result as a pretty-printed string:
+
+ 
+
+    print(result.stringify())
+
+This will print out the following:
+
+ 
+
+    Pong(
+        msg_id=781875678118,
+        ping_id=48641868471
+    )
+
+Which is a very easy way to get a feel for a response. You should nearly
+always print the stringified result, at least once, when trying out requests,
+to get a feel for what the response may look like.
+
+But of course, you don't need to do that. Without writing any code, you could
+have navigated through the "Returns" link to learn ``PingRequest`` returns a
+``Pong``, which only has one constructor, and the constructor has two members,
+``msg_id`` and ``ping_id``.
+
+If you wanted to create your own ``Pong``, you would use both members as input
+parameters:
+
+ 
+
+    my_pong = Pong(
+        msg_id=781875678118,
+        ping_id=48641868471
+    )
+
+(Yes, constructing object instances can use the same code that ``.stringify``
+would return!)
+
+And if you wanted to access the ``msg_id`` member, you would simply access it
+like any other attribute access in Python:
+
+ 
+
+    print(response.msg_id)
+
+
+Example walkthrough
+    ===
+
+Say `client.send_message()
+<telethon.client.messages.MessageMethods.send_message>` didn't exist,
+we could `use the search`_ to look for "message". There we would find
+:tl:`SendMessageRequest`, which we can work with.
+
+Every request is a Python class, and has the parameters needed for you
+to invoke it. You can also call ``help(request)`` for information on
+what input parameters it takes. Remember to "Copy import to the
+clipboard", or your script won't be aware of this class! Now we have:
+
+ 
+
+    from telethon.tl.functions.messages import SendMessageRequest
+
+If you're going to use a lot of these, you may do:
+
+ 
+
+    from telethon.tl import types, functions
+    # We now have access to 'functions.messages.SendMessageRequest'
+
+We see that this request must take at least two parameters, a ``peer``
+of type :tl:`InputPeer`, and a ``message`` which is just a Python
+`str`\ ing.
+
+How can we retrieve this :tl:`InputPeer`? We have two options. We manually
+construct one, for instance:
+
+ 
+
+    from telethon.tl.types import InputPeerUser
+
+    peer = InputPeerUser(user_id, user_hash)
+
+Or we call `client.get_input_entity()
+<telethon.client.users.UserMethods.get_input_entity>`:
+
+ 
+
+    import telethon
+
+    async def main():
+        peer = await client.get_input_entity('someone')
+
+    client.loop.run_until_complete(main())
+
+.. note::
+
+    Remember that ``await`` must occur inside an ``async def``.
+    Every full API example assumes you already know and do this.
+
+
+When you're going to invoke an API method, most require you to pass an
+:tl:`InputUser`, :tl:`InputChat`, or so on, this is why using
+`client.get_input_entity() <telethon.client.users.UserMethods.get_input_entity>`
+is more straightforward (and often immediate, if you've seen the user before,
+know their ID, etc.). If you also **need** to have information about the whole
+user, use `client.get_entity() <telethon.client.users.UserMethods.get_entity>`
+instead:
+
+ 
+
+    entity = await client.get_entity('someone')
+
+In the later case, when you use the entity, the library will cast it to
+its "input" version for you. If you already have the complete user and
+want to cache its input version so the library doesn't have to do this
+every time its used, simply call `telethon.utils.get_input_peer`:
+
+ 
+
+    from telethon import utils
+    peer = utils.get_input_peer(entity)
+
+
+.. note::
+
+    Since ``v0.16.2`` this is further simplified. The ``Request`` itself
+    will call `client.get_input_entity
+    <telethon.client.users.UserMethods.get_input_entity>` for you when
+    required, but it's good to remember what's happening.
+
+After this small parenthesis about `client.get_entity
+<telethon.client.users.UserMethods.get_entity>` versus
+`client.get_input_entity() <telethon.client.users.UserMethods.get_input_entity>`,
+we have everything we need. To invoke our
+request we do:
+
+ 
+
+    result = await client(SendMessageRequest(peer, 'Hello there!'))
+
+Message sent! Of course, this is only an example. There are over 250
+methods available as of layer 80, and you can use every single of them
+as you wish. Remember to use the right types! To sum up:
+
+ 
+
+    result = await client(SendMessageRequest(
+        await client.get_input_entity('username'), 'Hello there!'
+    ))
+
+
+This can further be simplified to:
+
+ 
+
+    result = await client(SendMessageRequest('username', 'Hello there!'))
+    # Or even
+    result = await client(SendMessageRequest(PeerChannel(id), 'Hello there!'))
+
+.. note::
+
+    Note that some requests have a "hash" parameter. This is **not**
+    your ``api_hash``! It likely isn't your self-user ``.access_hash`` either.
+
+    It's a special hash used by Telegram to only send a difference of new data
+    that you don't already have with that request, so you can leave it to 0,
+    and it should work (which means no hash is known yet).
+
+    For those requests having a "limit" parameter, you can often set it to
+    zero to signify "return default amount". This won't work for all of them
+    though, for instance, in "messages.search" it will actually return 0 items.
+
+
+Requests in Parallel
+     
+
+The library will automatically merge outgoing requests into a single
+*container*. Telegram's API supports sending multiple requests in a
+single container, which is faster because it has less overhead and
+the server can run them without waiting for others. You can also
+force using a container manually:
+
+ 
+
+    async def main():
+
+        # Letting the library do it behind the scenes
+        await asyncio.wait([
+            client.send_message('me', 'Hello'),
+            client.send_message('me', ','),
+            client.send_message('me', 'World'),
+            client.send_message('me', '.')
+        ])
+
+        # Manually invoking many requests at once
+        await client([
+            SendMessageRequest('me', 'Hello'),
+            SendMessageRequest('me', ', '),
+            SendMessageRequest('me', 'World'),
+            SendMessageRequest('me', '.')
+        ])
+
+Note that you cannot guarantee the order in which they are run.
+Try running the above code more than one time. You will see the
+order in which the messages arrive is different.
+
+If you use the raw API (the first option), you can use ``ordered``
+to tell the server that it should run the requests sequentially.
+This will still be faster than going one by one, since the server
+knows all requests directly:
+
+ 
+
+    await client([
+        SendMessageRequest('me', 'Hello'),
+        SendMessageRequest('me', ', '),
+        SendMessageRequest('me', 'World'),
+        SendMessageRequest('me', '.')
+    ], ordered=True)
+
+If any of the requests fails with a Telegram error (not connection
+errors or any other unexpected events), the library will raise
+`telethon.errors.common.MultiError`. You can ``except`` this
+and still access the successful results:
+
+ 
+
+    from telethon.errors import MultiError
+
+    try:
+        await client([
+            SendMessageRequest('me', 'Hello'),
+            SendMessageRequest('me', ''),
+            SendMessageRequest('me', 'World')
+        ], ordered=True)
+    except MultiError as e:
+        # The first and third requests worked.
+        first = e.results[0]
+        third = e.results[2]
+        # The second request failed.
+        second = e.exceptions[1]
+
+.. _TL reference: https://tl.telethon.dev
+.. _TL diff: https://diff.telethon.dev
+.. _PingRequest: https://tl.telethon.dev/methods/ping.html
+.. _use the search: https://tl.telethon.dev/?q=message&redirect=no
+
+
+
+
+=== File: ./telethon-docs/concepts/sessions.rst ===
+
+.. _sessions:
+
+   ==
+Session Files
+   ==
+
+.. contents::
+
+They are an important part for the library to be efficient, such as caching
+and handling your authorization key (or you would have to login every time!).
+
+What are Sessions?
+    ==
+
+The first parameter you pass to the constructor of the
+:ref:`TelegramClient <telethon-client>` is
+the ``session``, and defaults to be the session name (or full path). That is,
+if you create a ``TelegramClient('anon')`` instance and connect, an
+``anon.session`` file will be created in the working directory.
+
+Note that if you pass a string it will be a file in the current working
+directory, although you can also pass absolute paths.
+
+The session file contains enough information for you to login without
+re-sending the code, so if you have to enter the code more than once,
+maybe you're changing the working directory, renaming or removing the
+file, or using random names.
+
+These database files using ``sqlite3`` contain the required information to
+talk to the Telegram servers, such as to which IP the client should connect,
+port, authorization key so that messages can be encrypted, and so on.
+
+These files will by default also save all the input entities that you've seen,
+so that you can get information about a user or channel by just their ID.
+Telegram will **not** send their ``access_hash`` required to retrieve more
+information about them, if it thinks you have already seem them. For this
+reason, the library needs to store this information offline.
+
+The library will by default too save all the entities (chats and channels
+with their name and username, and users with the phone too) in the session
+file, so that you can quickly access them by username or phone number.
+
+If you're not going to work with updates, or don't need to cache the
+``access_hash`` associated with the entities' ID, you can disable this
+by setting ``client.session.save_entities = False``.
+
+
+Different Session Storage
+      =
+
+If you don't want to use the default SQLite session storage, you can also
+use one of the other implementations or implement your own storage.
+
+While it's often not the case, it's possible that SQLite is slow enough to
+be noticeable, in which case you can also use a different storage. Note that
+this is rare and most people won't have this issue, but it's worth a mention.
+
+To use a custom session storage, simply pass the custom session instance to
+:ref:`TelegramClient <telethon-client>` instead of
+the session name.
+
+Telethon contains three implementations of the abstract ``Session`` class:
+
+.. currentmodule:: telethon.sessions
+
+* `MemorySession <memory.MemorySession>`: stores session data within memory.
+* `SQLiteSession <sqlite.SQLiteSession>`: stores sessions within on-disk SQLite databases. Default.
+* `StringSession <string.StringSession>`: stores session data within memory,
+  but can be saved as a string.
+
+You can import these ``from telethon.sessions``. For example, using the
+`StringSession <string.StringSession>` is done as follows:
+
+ 
+
+    from telethon.sync import TelegramClient
+    from telethon.sessions import StringSession
+
+    with TelegramClient(StringSession(string), api_id, api_hash) as client:
+        ...  # use the client
+
+        # Save the string session as a string; you should decide how
+        # you want to save this information (over a socket, remote
+        # database, print it and then paste the string in the code,
+        # etc.); the advantage is that you don't need to save it
+        # on the current disk as a separate file, and can be reused
+        # anywhere else once you log in.
+        string = client.session.save()
+
+    # Note that it's also possible to save any other session type
+    # as a string by using ``StringSession.save(session_instance)``:
+    client = TelegramClient('sqlite-session', api_id, api_hash)
+    string = StringSession.save(client.session)
+
+There are other community-maintained implementations available:
+
+* `SQLAlchemy <https://github.com/tulir/telethon-session-sqlalchemy>`_:
+  stores all sessions in a single database via SQLAlchemy.
+
+* `Redis <https://github.com/ezdev128/telethon-session-redis>`_:
+  stores all sessions in a single Redis data store.
+
+* `MongoDB <https://github.com/watzon/telethon-session-mongo>`_:
+  stores the current session in a MongoDB database.
+
+
+Creating your Own Storage
+      =
+
+The easiest way to create your own storage implementation is to use
+`MemorySession <memory.MemorySession>` as the base and check out how
+`SQLiteSession <sqlite.SQLiteSession>` or one of the community-maintained
+implementations work. You can find the relevant Python files under the
+``sessions/`` directory in the Telethon's repository.
+
+After you have made your own implementation, you can add it to the
+community-maintained session implementation list above with a pull request.
+
+
+String Sessions
+   ===
+
+`StringSession <string.StringSession>` are a convenient way to embed your
+login credentials directly into your code for extremely easy portability,
+since all they take is a string to be able to login without asking for your
+phone and code (or faster start if you're using a bot token).
+
+The easiest way to generate a string session is as follows:
+
+ 
+
+    from telethon.sync import TelegramClient
+    from telethon.sessions import StringSession
+
+    with TelegramClient(StringSession(), api_id, api_hash) as client:
+        print(client.session.save())
+
+
+Think of this as a way to export your authorization key (what's needed
+to login into your account). This will print a string in the standard
+output (likely your terminal).
+
+.. warning::
+
+    **Keep this string safe!** Anyone with this string can use it
+    to login into your account and do anything they want to.
+
+    This is similar to leaking your ``*.session`` files online,
+    but it is easier to leak a string than it is to leak a file.
+
+
+Once you have the string (which is a bit long), load it into your script
+somehow. You can use a normal text file and ``open(...).read()`` it or
+you can save it in a variable directly:
+
+ 
+
+    string = '1aaNk8EX-YRfwoRsebUkugFvht6DUPi_Q25UOCzOAqzc...'
+    with TelegramClient(StringSession(string), api_id, api_hash) as client:
+        client.loop.run_until_complete(client.send_message('me', 'Hi'))
+
+
+These strings are really convenient for using in places like Heroku since
+their ephemeral filesystem will delete external files once your application
+is over.
+
+
+
+
+=== File: ./telethon-docs/concepts/errors.rst ===
+
+.. _rpc-errors:
+
+  ==
+RPC Errors
+  ==
+
+RPC stands for Remote Procedure Call, and when the library raises
+a ``RPCError``, it's because you have invoked some of the API
+methods incorrectly (wrong parameters, wrong permissions, or even
+something went wrong on Telegram's server).
+
+You should import the errors from ``telethon.errors`` like so:
+
+ 
+
+    from telethon import errors
+
+    try:
+        async with client.takeout() as takeout:
+            ...
+
+    except errors.TakeoutInitDelayError as e:
+        #  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ here we except TAKEOUT_INIT_DELAY
+        print('Must wait', e.seconds, 'before takeout')
+
+
+There isn't any official list of all possible RPC errors, so the
+`list of known errors`_ is provided on a best-effort basis. When new methods
+are available, the list may be lacking since we simply don't know what errors
+can raise from them.
+
+Once we do find out about a new error and what causes it, the list is
+updated, so if you see an error without a specific class, do report it
+(and what method caused it)!.
+
+This list is used to generate documentation for the `raw API page`_.
+For example, if we want to know what errors can occur from
+`messages.sendMessage`_ we can simply navigate to its raw API page
+and find it has 24 known RPC errors at the time of writing.
+
+
+Base Errors
+  ===
+
+All the "base" errors are listed in :ref:`telethon-errors`.
+Any other more specific error will be a subclass of these.
+
+If the library isn't aware of a specific error just yet, it will instead
+raise one of these superclasses. This means you may find stuff like this:
+
+.. code-block:: text
+
+    telethon.errors.rpcbaseerrors.BadRequestError: RPCError 400: MESSAGE_POLL_CLOSED (caused by SendVoteRequest)
+
+If you do, make sure to open an issue or send a pull request to update the
+`list of known errors`_.
+
+
+Common Errors
+   =
+
+These are some of the errors you may normally need to deal with:
+
+-  ``FloodWaitError`` (420), the same request was repeated many times.
+   Must wait ``.seconds`` (you can access this attribute). For example:
+
+    
+
+       ...
+       from telethon import errors
+
+       try:
+           messages = await client.get_messages(chat)
+           print(messages[0].text)
+       except errors.FloodWaitError as e:
+           print('Have to sleep', e.seconds, 'seconds')
+           time.sleep(e.seconds)
+
+-  ``SessionPasswordNeededError``, if you have setup two-steps
+   verification on Telegram and are trying to sign in.
+-  ``FilePartMissingError``, if you have tried to upload an empty file.
+-  ``ChatAdminRequiredError``, you don't have permissions to perform
+   said operation on a chat or channel. Try avoiding filters, i.e. when
+   searching messages.
+
+The generic classes for different error codes are:
+
+- ``InvalidDCError`` (303), the request must be repeated on another DC.
+- ``BadRequestError`` (400), the request contained errors.
+- ``UnauthorizedError`` (401), the user is not authorized yet.
+- ``ForbiddenError`` (403), privacy violation error.
+- ``NotFoundError`` (404), make sure you're invoking ``Request``\ 's!
+
+If the error is not recognised, it will only be an ``RPCError``.
+
+You can refer to all errors from Python through the ``telethon.errors``
+module. If you don't know what attributes they have, try printing their
+dir (like ``print(dir(e))``).
+
+
+Attributes
+  ==
+
+Some of the errors carry additional data in them. When they look like
+``EMAIL_UNCONFIRMED_X``, the ``_X`` value will be accessible from the
+error instance. The current list of errors that do this is the following:
+
+- ``EmailUnconfirmedError`` has ``.code_length``.
+- ``FileMigrateError`` has ``.new_dc``.
+- ``FilePartMissingError`` has ``.which``.
+- ``FloodTestPhoneWaitError`` has ``.seconds``.
+- ``FloodWaitError`` has ``.seconds``.
+- ``InterdcCallErrorError`` has ``.dc``.
+- ``InterdcCallRichErrorError`` has ``.dc``.
+- ``NetworkMigrateError`` has ``.new_dc``.
+- ``PhoneMigrateError`` has ``.new_dc``.
+- ``SlowModeWaitError`` has ``.seconds``.
+- ``TakeoutInitDelayError`` has ``.seconds``.
+- ``UserMigrateError`` has ``.new_dc``.
+
+
+Avoiding Limits
+   ===
+
+Don't spam. You won't get ``FloodWaitError`` or your account banned or
+deleted if you use the library *for legit use cases*. Make cool tools.
+Don't spam! Nobody knows the exact limits for all requests since they
+depend on a lot of factors, so don't bother asking.
+
+Still, if you do have a legit use case and still get those errors, the
+library will automatically sleep when they are smaller than 60 seconds
+by default. You can set different "auto-sleep" thresholds:
+
+ 
+
+    client.flood_sleep_threshold = 0  # Don't auto-sleep
+    client.flood_sleep_threshold = 24 * 60 * 60  # Sleep always
+
+You can also except it and act as you prefer:
+
+ 
+
+    from telethon.errors import FloodWaitError
+    try:
+        ...
+    except FloodWaitError as e:
+        print('Flood waited for', e.seconds)
+        quit(1)
+
+VoIP numbers are very limited, and some countries are more limited too.
+
+
+.. _list of known errors: https://github.com/LonamiWebs/Telethon/blob/v1/telethon_generator/data/errors.csv
+.. _raw API page: https://tl.telethon.dev/
+.. _messages.sendMessage: https://tl.telethon.dev/methods/messages/send_message.html
+
+
+
+
+=== File: ./telethon-docs/concepts/entities.rst ===
+
+.. _entities:
+
+  
+Entities
+  
+
+The library widely uses the concept of "entities". An entity will refer
+to any :tl:`User`, :tl:`Chat` or :tl:`Channel` object that the API may return
+in response to certain methods, such as :tl:`GetUsersRequest`.
+
+.. note::
+
+    When something "entity-like" is required, it means that you need to
+    provide something that can be turned into an entity. These things include,
+    but are not limited to, usernames, exact titles, IDs, :tl:`Peer` objects,
+    or even entire :tl:`User`, :tl:`Chat` and :tl:`Channel` objects and even
+    phone numbers **from people you have in your contact list**.
+
+    To "encounter" an ID, you would have to "find it" like you would in the
+    normal app. If the peer is in your dialogs, you would need to
+    `client.get_dialogs() <telethon.client.dialogs.DialogMethods.get_dialogs>`.
+    If the peer is someone in a group, you would similarly
+    `client.get_participants(group) <telethon.client.chats.ChatMethods.get_participants>`.
+
+    Once you have encountered an ID, the library will (by default) have saved
+    their ``access_hash`` for you, which is needed to invoke most methods.
+    This is why sometimes you might encounter this error when working with
+    the library. You should ``except ValueError`` and run code that you know
+    should work to find the entity.
+
+
+.. contents::
+
+
+What is an Entity?
+    ==
+
+A lot of methods and requests require *entities* to work. For example,
+you send a message to an *entity*, get the username of an *entity*, and
+so on.
+
+There are a lot of things that work as entities: usernames, phone numbers,
+chat links, invite links, IDs, and the types themselves. That is, you can
+use any of those when you see an "entity" is needed.
+
+.. note::
+
+    Remember that the phone number must be in your contact list before you
+    can use it.
+
+You should use, **from better to worse**:
+
+1. Input entities. For example, `event.input_chat
+   <telethon.tl.custom.chatgetter.ChatGetter.input_chat>`,
+   `message.input_sender
+   <telethon.tl.custom.sendergetter.SenderGetter.input_sender>`,
+   or caching an entity you will use a lot with
+   ``entity = await client.get_input_entity(...)``.
+
+2. Entities. For example, if you had to get someone's
+   username, you can just use ``user`` or ``channel``.
+   It will work. Only use this option if you already have the entity!
+
+3. IDs. This will always look the entity up from the
+   cache (the ``*.session`` file caches seen entities).
+
+4. Usernames, phone numbers and links. The cache will be
+   used too (unless you force a `client.get_entity()
+   <telethon.client.users.UserMethods.get_entity>`),
+   but may make a request if the username, phone or link
+   has not been found yet.
+
+In recent versions of the library, the following two are equivalent:
+
+ 
+
+    async def handler(event):
+        await client.send_message(event.sender_id, 'Hi')
+        await client.send_message(event.input_sender, 'Hi')
+
+
+If you need to be 99% sure that the code will work (sometimes it's
+simply impossible for the library to find the input entity), or if
+you will reuse the chat a lot, consider using the following instead:
+
+ 
+
+    async def handler(event):
+        # This method may make a network request to find the input sender.
+        # Properties can't make network requests, so we need a method.
+        sender = await event.get_input_sender()
+        await client.send_message(sender, 'Hi')
+        await client.send_message(sender, 'Hi')
+
+
+Getting Entities
+    
+
+Through the use of the :ref:`sessions`, the library will automatically
+remember the ID and hash pair, along with some extra information, so
+you're able to just do this:
+
+ 
+
+    # (These examples assume you are inside an "async def")
+    #
+    # Dialogs are the "conversations you have open".
+    # This method returns a list of Dialog, which
+    # has the .entity attribute and other information.
+    #
+    # This part is IMPORTANT, because it fills the entity cache.
+    dialogs = await client.get_dialogs()
+
+    # All of these work and do the same.
+    username = await client.get_entity('username')
+    username = await client.get_entity('t.me/username')
+    username = await client.get_entity('https://telegram.dog/username')
+
+    # Other kind of entities.
+    channel = await client.get_entity('telegram.me/joinchat/AAAAAEkk2WdoDrB4-Q8-gg')
+    contact = await client.get_entity('+34xxxxxxxxx')
+    friend  = await client.get_entity(friend_id)
+
+    # Getting entities through their ID (User, Chat or Channel)
+    entity = await client.get_entity(some_id)
+
+    # You can be more explicit about the type for said ID by wrapping
+    # it inside a Peer instance. This is recommended but not necessary.
+    from telethon.tl.types import PeerUser, PeerChat, PeerChannel
+
+    my_user    = await client.get_entity(PeerUser(some_id))
+    my_chat    = await client.get_entity(PeerChat(some_id))
+    my_channel = await client.get_entity(PeerChannel(some_id))
+
+
+.. note::
+
+    You **don't** need to get the entity before using it! Just let the
+    library do its job. Use a phone from your contacts, username, ID or
+    input entity (preferred but not necessary), whatever you already have.
+
+All methods in the :ref:`telethon-client` call `.get_input_entity()
+<telethon.client.users.UserMethods.get_input_entity>` prior
+to sending the request to save you from the hassle of doing so manually.
+That way, convenience calls such as `client.send_message('username', 'hi!')
+<telethon.client.messages.MessageMethods.send_message>`
+become possible.
+
+Every entity the library encounters (in any response to any call) will by
+default be cached in the ``.session`` file (an SQLite database), to avoid
+performing unnecessary API calls. If the entity cannot be found, additonal
+calls like :tl:`ResolveUsernameRequest` or :tl:`GetContactsRequest` may be
+made to obtain the required information.
+
+
+Entities vs. Input Entities
+      ===
+
+.. note::
+
+    This section is informative, but worth reading. The library
+    will transparently handle all of these details for you.
+
+On top of the normal types, the API also make use of what they call their
+``Input*`` versions of objects. The input version of an entity (e.g.
+:tl:`InputPeerUser`, :tl:`InputChat`, etc.) only contains the minimum
+information that's required from Telegram to be able to identify
+who you're referring to: a :tl:`Peer`'s **ID** and **hash**. They
+are named like this because they are input parameters in the requests.
+
+Entities' ID are the same for all user and bot accounts, however, the access
+hash is **different for each account**, so trying to reuse the access hash
+from one account in another will **not** work.
+
+Sometimes, Telegram only needs to indicate the type of the entity along
+with their ID. For this purpose, :tl:`Peer` versions of the entities also
+exist, which just have the ID. You cannot get the hash out of them since
+you should not be needing it. The library probably has cached it before.
+
+Peers are enough to identify an entity, but they are not enough to make
+a request with them. You need to know their hash before you can
+"use them", and to know the hash you need to "encounter" them, let it
+be in your dialogs, participants, message forwards, etc.
+
+.. note::
+
+    You *can* use peers with the library. Behind the scenes, they are
+    replaced with the input variant. Peers "aren't enough" on their own
+    but the library will do some more work to use the right type.
+
+As we just mentioned, API calls don't need to know the whole information
+about the entities, only their ID and hash. For this reason, another method,
+`client.get_input_entity() <telethon.client.users.UserMethods.get_input_entity>`
+is available. This will always use the cache while possible, making zero API
+calls most of the time. When a request is made, if you provided the full
+entity, e.g. an :tl:`User`, the library will convert it to the required
+:tl:`InputPeer` automatically for you.
+
+**You should always favour**
+`client.get_input_entity() <telethon.client.users.UserMethods.get_input_entity>`
+**over**
+`client.get_entity() <telethon.client.users.UserMethods.get_entity>`
+for this reason! Calling the latter will always make an API call to get
+the most recent information about said entity, but invoking requests don't
+need this information, just the :tl:`InputPeer`. Only use
+`client.get_entity() <telethon.client.users.UserMethods.get_entity>`
+if you need to get actual information, like the username, name, title, etc.
+of the entity.
+
+To further simplify the workflow, since the version ``0.16.2`` of the
+library, the raw requests you make to the API are also able to call
+`client.get_input_entity() <telethon.client.users.UserMethods.get_input_entity>`
+wherever needed, so you can even do things like:
+
+ 
+
+    await client(SendMessageRequest('username', 'hello'))
+
+The library will call the ``.resolve()`` method of the request, which will
+resolve ``'username'`` with the appropriated :tl:`InputPeer`. Don't worry if
+you don't get this yet, but remember some of the details here are important.
+
+
+Full Entities
+   =
+
+In addition to :tl:`PeerUser`, :tl:`InputPeerUser`, :tl:`User` (and its
+variants for chats and channels), there is also the concept of :tl:`UserFull`.
+
+This full variant has additional information such as whether the user is
+blocked, its notification settings, the bio or about of the user, etc.
+
+There is also :tl:`messages.ChatFull` which is the equivalent of full entities
+for chats and channels, with also the about section of the channel. Note that
+the ``users`` field only contains bots for the channel (so that clients can
+suggest commands to use).
+
+You can get both of these by invoking :tl:`GetFullUser`, :tl:`GetFullChat`
+and :tl:`GetFullChannel` respectively.
+
+
+Accessing Entities
+    ==
+
+Although it's explicitly noted in the documentation that messages
+*subclass* `ChatGetter <telethon.tl.custom.chatgetter.ChatGetter>`
+and `SenderGetter <telethon.tl.custom.sendergetter.SenderGetter>`,
+some people still don't get inheritance.
+
+When the documentation says "Bases: `telethon.tl.custom.chatgetter.ChatGetter`"
+it means that the class you're looking at, *also* can act as the class it
+bases. In this case, `ChatGetter <telethon.tl.custom.chatgetter.ChatGetter>`
+knows how to get the *chat* where a thing belongs to.
+
+So, a `Message <telethon.tl.custom.message.Message>` is a
+`ChatGetter <telethon.tl.custom.chatgetter.ChatGetter>`.
+That means you can do this:
+
+ 
+
+    message.is_private
+    message.chat_id
+    await message.get_chat()
+    # ...etc
+
+`SenderGetter <telethon.tl.custom.sendergetter.SenderGetter>` is similar:
+
+ 
+
+    message.user_id
+    await message.get_input_sender()
+    message.user
+    # ...etc
+
+Quite a few things implement them, so it makes sense to reuse the code.
+For example, all events (except raw updates) implement `ChatGetter
+<telethon.tl.custom.chatgetter.ChatGetter>` since all events occur
+in some chat.
+
+
+Summary
+ ===
+
+TL;DR; If you're here because of *"Could not find the input entity for"*,
+you must ask yourself "how did I find this entity through official
+applications"? Now do the same with the library. Use what applies:
+
+ 
+
+    # (These examples assume you are inside an "async def")
+    async with client:
+        # Does it have a username? Use it!
+        entity = await client.get_entity(username)
+
+        # Do you have a conversation open with them? Get dialogs.
+        await client.get_dialogs()
+
+        # Are they participant of some group? Get them.
+        await client.get_participants('username')
+
+        # Is the entity the original sender of a forwarded message? Get it.
+        await client.get_messages('username', 100)
+
+        # NOW you can use the ID, anywhere!
+        await client.send_message(123456, 'Hi!')
+
+        entity = await client.get_entity(123456)
+        print(entity)
+
+Once the library has "seen" the entity, you can use their **integer** ID.
+You can't use entities from IDs the library hasn't seen. You must make the
+library see them *at least once* and disconnect properly. You know where
+the entities are and you must tell the library. It won't guess for you.
+
+
+
+
+=== File: ./telethon-docs/concepts/asyncio.rst ===
+
+.. _mastering-asyncio:
+
+    =
+Mastering asyncio
+    =
+
+.. contents::
+
+
+What's asyncio?
+   ===
+
+`asyncio` is a Python 3's built-in library. This means it's already installed if
+you have Python 3. Since Python 3.5, it is convenient to work with asynchronous
+code. Before (Python 3.4) we didn't have ``async`` or ``await``, but now we do.
+
+`asyncio` stands for *Asynchronous Input Output*. This is a very powerful
+concept to use whenever you work IO. Interacting with the web or external
+APIs such as Telegram's makes a lot of sense this way.
+
+
+Why asyncio?
+   
+
+Asynchronous IO makes a lot of sense in a library like Telethon.
+You send a request to the server (such as "get some message"), and
+thanks to `asyncio`, your code won't block while a response arrives.
+
+The alternative would be to spawn a thread for each update so that
+other code can run while the response arrives. That is *a lot* more
+expensive.
+
+The code will also run faster, because instead of switching back and
+forth between the OS and your script, your script can handle it all.
+Avoiding switching saves quite a bit of time, in Python or any other
+language that supports asynchronous IO. It will also be cheaper,
+because tasks are smaller than threads, which are smaller than processes.
+
+
+What are asyncio basics?
+      
+
+The code samples below assume that you have Python 3.7 or greater installed.
+
+ 
+
+    # First we need the asyncio library
+    import asyncio
+
+    # We also need something to run
+    async def main():
+        for char in 'Hello, world!\n':
+            print(char, end='', flush=True)
+            await asyncio.sleep(0.2)
+
+    # Then, we can create a new asyncio loop and use it to run our coroutine.
+    # The creation and tear-down of the loop is hidden away from us.
+    asyncio.run(main())
+
+
+What does telethon.sync do?
+      ===
+
+The moment you import any of these:
+
+ 
+
+    from telethon import sync, ...
+    # or
+    from telethon.sync import ...
+    # or
+    import telethon.sync
+
+The ``sync`` module rewrites most ``async def``
+methods in Telethon to something similar to this:
+
+ 
+
+    def new_method():
+        result = original_method()
+        if loop.is_running():
+            # the loop is already running, return the await-able to the user
+            return result
+        else:
+            # the loop is not running yet, so we can run it for the user
+            return loop.run_until_complete(result)
+
+
+That means you can do this:
+
+ 
+
+    print(client.get_me().username)
+
+Instead of this:
+
+ 
+
+    me = client.loop.run_until_complete(client.get_me())
+    print(me.username)
+
+    # or, using asyncio's default loop (it's the same)
+    import asyncio
+    loop = asyncio.get_running_loop()  # == client.loop
+    me = loop.run_until_complete(client.get_me())
+    print(me.username)
+
+
+As you can see, it's a lot of boilerplate and noise having to type
+``run_until_complete`` all the time, so you can let the magic module
+to rewrite it for you. But notice the comment above: it won't run
+the loop if it's already running, because it can't. That means this:
+
+ 
+
+    async def main():
+        # 3. the loop is running here
+        print(
+            client.get_me()  # 4. this will return a coroutine!
+            .username  # 5. this fails, coroutines don't have usernames
+        )
+
+    loop.run_until_complete(  # 2. run the loop and the ``main()`` coroutine
+        main()  # 1. calling ``async def`` "returns" a coroutine
+    )
+
+
+Will fail. So if you're inside an ``async def``, then the loop is
+running, and if the loop is running, you must ``await`` things yourself:
+
+ 
+
+    async def main():
+        print((await client.get_me()).username)
+
+    loop.run_until_complete(main())
+
+
+What are async, await and coroutines?
+         =
+
+The ``async`` keyword lets you define asynchronous functions,
+also known as coroutines, and also iterate over asynchronous
+loops or use ``async with``:
+
+ 
+
+    import asyncio
+
+    async def main():
+        # ^ this declares the main() coroutine function
+
+        async with client:
+            # ^ this is an asynchronous with block
+
+            async for message in client.iter_messages(chat):
+                # ^ this is a for loop over an asynchronous generator
+
+                print(message.sender.username)
+
+    asyncio.run(main())
+    # ^ this will create a new asyncio loop behind the scenes and tear it down
+    #   once the function returns. It will run the loop untiil main finishes.
+    #   You should only use this function if there is no other loop running.
+
+
+The ``await`` keyword blocks the *current* task, and the loop can run
+other tasks. Tasks can be thought of as "threads", since many can run
+concurrently:
+
+ 
+
+    import asyncio
+
+    async def hello(delay):
+        await asyncio.sleep(delay)  # await tells the loop this task is "busy"
+        print('hello')  # eventually the loop resumes the code here
+
+    async def world(delay):
+        # the loop decides this method should run first
+        await asyncio.sleep(delay)  # await tells the loop this task is "busy"
+        print('world')  # eventually the loop finishes all tasks
+
+    async def main():
+        asyncio.create_task(world(2))  # create the world task, passing 2 as delay
+        asyncio.create_task(hello(delay=1))  # another task, but with delay 1
+        await asyncio.sleep(3)  # wait for three seconds before exiting
+
+    try:
+        # create a new temporary asyncio loop and use it to run main
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
+
+The same example, but without the comment noise:
+
+ 
+
+    import asyncio
+
+    async def hello(delay):
+        await asyncio.sleep(delay)
+        print('hello')
+
+    async def world(delay):
+        await asyncio.sleep(delay)
+        print('world')
+
+    async def main():
+        asyncio.create_task(world(2))
+        asyncio.create_task(hello(delay=1))
+        await asyncio.sleep(3)
+
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
+
+
+Can I use threads?
+    ==
+
+Yes, you can, but you must understand that the loops themselves are
+not thread safe. and you must be sure to know what is happening. The
+easiest and cleanest option is to use `asyncio.run` to create and manage
+the new event loop for you:
+
+ 
+
+    import asyncio
+    import threading
+
+    async def actual_work():
+        client = TelegramClient(..., loop=loop)
+        ...  # can use `await` here
+
+    def go():
+        asyncio.run(actual_work())
+
+    threading.Thread(target=go).start()
+
+
+Generally, **you don't need threads** unless you know what you're doing.
+Just create another task, as shown above. If you're using the Telethon
+with a library that uses threads, you must be careful to use `threading.Lock`
+whenever you use the client, or enable the compatible mode. For that, see
+:ref:`compatibility-and-convenience`.
+
+You may have seen this error:
+
+.. code-block:: text
+
+    RuntimeError: There is no current event loop in thread 'Thread-1'.
+
+It just means you didn't create a loop for that thread. Please refer to
+the ``asyncio`` documentation to correctly learn how to set the event loop
+for non-main threads.
+
+
+client.run_until_disconnected() blocks!
+         ===
+
+All of what `client.run_until_disconnected()
+<telethon.client.updates.UpdateMethods.run_until_disconnected>` does is
+run the `asyncio`'s event loop until the client is disconnected. That means
+*the loop is running*. And if the loop is running, it will run all the tasks
+in it. So if you want to run *other* code, create tasks for it:
+
+ 
+
+    from datetime import datetime
+
+    async def clock():
+        while True:
+            print('The time:', datetime.now())
+            await asyncio.sleep(1)
+
+    loop.create_task(clock())
+    ...
+    client.run_until_disconnected()
+
+This creates a task for a clock that prints the time every second.
+You don't need to use `client.run_until_disconnected()
+<telethon.client.updates.UpdateMethods.run_until_disconnected>` either!
+You just need to make the loop is running, somehow. `loop.run_forever()
+<asyncio.loop.run_forever()>` and `loop.run_until_complete()
+<asyncio.loop.run_until_complete>` can also be used to run
+the loop, and Telethon will be happy with any approach.
+
+Of course, there are better tools to run code hourly or daily, see below.
+
+
+What else can asyncio do?
+      =
+
+Asynchronous IO is a really powerful tool, as we've seen. There are plenty
+of other useful libraries that also use `asyncio` and that you can integrate
+with Telethon.
+
+* `aiohttp <https://github.com/aio-libs/aiohttp>`_ is like the infamous
+  `requests <https://github.com/requests/requests/>`_ but asynchronous.
+* `quart <https://gitlab.com/pgjones/quart>`_ is an asynchronous alternative
+  to `Flask <http://flask.pocoo.org/>`_.
+* `aiocron <https://github.com/gawel/aiocron>`_ lets you schedule things
+  to run things at a desired time, or run some tasks hourly, daily, etc.
+
+And of course, `asyncio <https://docs.python.org/3/library/asyncio.html>`_
+itself! It has a lot of methods that let you do nice things. For example,
+you can run requests in parallel:
+
+ 
+
+    async def main():
+        last, sent, download_path = await asyncio.gather(
+            client.get_messages('telegram', 10),
+            client.send_message('me', 'Using asyncio!'),
+            client.download_profile_photo('telegram')
+        )
+
+    loop.run_until_complete(main())
+
+
+This code will get the 10 last messages from `@telegram
+<https://t.me/telegram>`_, send one to the chat with yourself, and also
+download the profile photo of the channel. `asyncio` will run all these
+three tasks at the same time. You can run all the tasks you want this way.
+
+A different way would be:
+
+ 
+
+    loop.create_task(client.get_messages('telegram', 10))
+    loop.create_task(client.send_message('me', 'Using asyncio!'))
+    loop.create_task(client.download_profile_photo('telegram'))
+
+They will run in the background as long as the loop is running too.
+
+You can also `start an asyncio server
+<https://docs.python.org/3/library/asyncio-stream.html#asyncio.start_server>`_
+in the main script, and from another script, `connect to it
+<https://docs.python.org/3/library/asyncio-stream.html#asyncio.open_connection>`_
+to achieve `Inter-Process Communication
+<https://en.wikipedia.org/wiki/Inter-process_communication>`_.
+You can get as creative as you want. You can program anything you want.
+When you use a library, you're not limited to use only its methods. You can
+combine all the libraries you want. People seem to forget this simple fact!
+
+
+Why does client.start() work outside async?
+          ===
+
+Because it's so common that it's really convenient to offer said
+functionality by default. This means you can set up all your event
+handlers and start the client without worrying about loops at all.
+
+Using the client in a ``with`` block, `start
+<telethon.client.auth.AuthMethods.start>`, `run_until_disconnected
+<telethon.client.updates.UpdateMethods.run_until_disconnected>`, and
+`disconnect <telethon.client.telegrambaseclient.TelegramBaseClient.disconnect>`
+all support this.
+
+Where can I read more?
+     ==
+
+`Check out my blog post
+<https://lonami.dev/blog/asyncio/>`_ about `asyncio`, which
+has some more examples and pictures to help you understand what happens
+when the loop runs.
+
+
+
+
+=== File: ./telethon-docs/concepts/strings.rst ===
+
+     ==
+String-based Debugging
+     ==
+
+Debugging is *really* important. Telegram's API is really big and there
+are a lot of things that you should know. Such as, what attributes or fields
+does a result have? Well, the easiest thing to do is printing it:
+
+ 
+
+    entity = await client.get_entity('username')
+    print(entity)
+
+That will show a huge **string** similar to the following:
+
+ 
+
+    Channel(id=1066197625, title='Telegram Usernames', photo=ChatPhotoEmpty(), date=datetime.datetime(2016, 12, 16, 15, 15, 43, tzinfo=datetime.timezone.utc), version=0, creator=False, left=True, broadcast=True, verified=True, megagroup=False, restricted=False, signatures=False, min=False, scam=False, has_link=False, has_geo=False, slowmode_enabled=False, access_hash=-6309373984955162244, username='username', restriction_reason=[], admin_rights=None, banned_rights=None, default_banned_rights=None, participants_count=None)
+
+That's a lot of text. But as you can see, all the properties are there.
+So if you want the title you **don't use regex** or anything like
+splitting ``str(entity)`` to get what you want. You just access the
+attribute you need:
+
+ 
+
+    title = entity.title
+
+Can we get better than the shown string, though? Yes!
+
+ 
+
+    print(entity.stringify())
+
+Will show a much better representation:
+
+ 
+
+    Channel(
+        id=1066197625,
+        title='Telegram Usernames',
+        photo=ChatPhotoEmpty(
+        ),
+        date=datetime.datetime(2016, 12, 16, 15, 15, 43, tzinfo=datetime.timezone.utc),
+        version=0,
+        creator=False,
+        left=True,
+        broadcast=True,
+        verified=True,
+        megagroup=False,
+        restricted=False,
+        signatures=False,
+        min=False,
+        scam=False,
+        has_link=False,
+        has_geo=False,
+        slowmode_enabled=False,
+        access_hash=-6309373984955162244,
+        username='username',
+        restriction_reason=[
+        ],
+        admin_rights=None,
+        banned_rights=None,
+        default_banned_rights=None,
+        participants_count=None
+    )
+
+
+Now it's easy to see how we could get, for example,
+the ``year`` value. It's inside ``date``:
+
+ 
+
+    channel_year = entity.date.year
+
+You don't need to print everything to see what all the possible values
+can be. You can just search in http://tl.telethon.dev/.
+
+Remember that you can use Python's `isinstance
+<https://docs.python.org/3/library/functions.html#isinstance>`_
+to check the type of something. For example:
+
+ 
+
+    from telethon import types
+
+    if isinstance(entity.photo, types.ChatPhotoEmpty):
+        print('Channel has no photo')
+
+
+
+
+=== File: ./telethon-docs/concepts/chats-vs-channels.rst ===
+
+.. _chats-channels:
+
+    =
+Chats vs Channels
+    =
+
+Telegram's raw API can get very confusing sometimes, in particular when it
+comes to talking about "chats", "channels", "groups", "megagroups", and all
+those concepts.
+
+This section will try to explain what each of these concepts are.
+
+
+Chats
+ =
+
+A ``Chat`` can be used to talk about either the common "subclass" that both
+chats and channels share, or the concrete :tl:`Chat` type.
+
+Technically, both :tl:`Chat` and :tl:`Channel` are a form of the `Chat type`_.
+
+**Most of the time**, the term :tl:`Chat` is used to talk about *small group
+chats*. When you create a group through an official application, this is the
+type that you get. Official applications refer to these as "Group".
+
+Both the bot API and Telethon will add a minus sign (negate) the real chat ID
+so that you can tell at a glance, with just a number, the entity type.
+
+For example, if you create a chat with :tl:`CreateChatRequest`, the real chat
+ID might be something like `123`. If you try printing it from a
+`message.chat_id` you will see `-123`. This ID helps Telethon know you're
+talking about a :tl:`Chat`.
+
+
+Channels
+  
+
+Official applications create a *broadcast* channel when you create a new
+channel (used to broadcast messages, only administrators can post messages).
+
+Official applications implicitly *migrate* an *existing* :tl:`Chat` to a
+*megagroup* :tl:`Channel` when you perform certain actions (exceed user limit,
+add a public username, set certain permissions, etc.).
+
+A ``Channel`` can be created directly with :tl:`CreateChannelRequest`, as
+either a ``megagroup`` or ``broadcast``.
+
+Official applications use the term "channel" **only** for broadcast channels.
+
+The API refers to the different types of :tl:`Channel` with certain attributes:
+
+* A **broadcast channel** is a :tl:`Channel` with the ``channel.broadcast``
+  attribute set to `True`.
+
+* A **megagroup channel** is a :tl:`Channel` with the ``channel.megagroup``
+  attribute set to `True`. Official applications refer to this as "supergroup".
+
+* A **gigagroup channel** is a :tl:`Channel` with the ``channel.gigagroup``
+  attribute set to `True`. Official applications refer to this as "broadcast
+  groups", and is used when a megagroup becomes very large and administrators
+  want to transform it into something where only they can post messages.
+
+
+Both the bot API and Telethon will "concatenate" ``-100`` to the real chat ID
+so that you can tell at a glance, with just a number, the entity type.
+
+For example, if you create a new broadcast channel, the real channel ID might
+be something like `456`. If you try printing it from a `message.chat_id` you
+will see `-1000000000456`. This ID helps Telethon know you're talking about a
+:tl:`Channel`.
+
+
+Converting IDs
+   ==
+
+You can convert between the "marked" identifiers (prefixed with a minus sign)
+and the real ones with ``utils.resolve_id``. It will return a tuple with the
+real ID, and the peer type (the class):
+
+ 
+
+    from telethon import utils
+    real_id, peer_type = utils.resolve_id(-1000000000456)
+
+    print(real_id)  # 456
+    print(peer_type)  # <class 'telethon.tl.types.PeerChannel'>
+
+    peer = peer_type(real_id)
+    print(peer)  # PeerChannel(channel_id=456)
+
+
+The reverse operation can be done with ``utils.get_peer_id``:
+
+ 
+
+    print(utils.get_peer_id(types.PeerChannel(456)))  # -1000000000456
+
+
+Note that this function can also work with other types, like :tl:`Chat` or
+:tl:`Channel` instances.
+
+If you need to convert other types like usernames which might need to perform
+API calls to find out the identifier, you can use ``client.get_peer_id``:
+
+
+ 
+
+    print(await client.get_peer_id('me'))  # your id
+
+
+If there is no "mark" (no minus sign), Telethon will assume your identifier
+refers to a :tl:`User`. If this is **not** the case, you can manually fix it:
+
+
+ 
+
+    from telethon import types
+    await client.send_message(types.PeerChannel(456), 'hello')
+    #                         ^^^^^^^^^^^^^^^^^ explicit peer type
+
+
+A note on raw API
+    =
+
+Certain methods only work on a :tl:`Chat`, and some others only work on a
+:tl:`Channel` (and these may only work in broadcast, or megagroup). Your code
+likely knows what it's working with, so it shouldn't be too much of an issue.
+
+If you need to find the :tl:`Channel` from a :tl:`Chat` that migrated to it,
+access the `migrated_to` property:
+
+ 
+
+    # chat is a Chat
+    channel = await client.get_entity(chat.migrated_to)
+    # channel is now a Channel
+
+Channels do not have a "migrated_from", but a :tl:`ChannelFull` does. You can
+use :tl:`GetFullChannelRequest` to obtain this:
+
+ 
+
+    from telethon import functions
+    full = await client(functions.channels.GetFullChannelRequest(your_channel))
+    full_channel = full.full_chat
+    # full_channel is a ChannelFull
+    print(full_channel.migrated_from_chat_id)
+
+This way, you can also access the linked discussion megagroup of a broadcast channel:
+
+ 
+
+    print(full_channel.linked_chat_id)  # prints ID of linked discussion group or None
+
+You do not need to use ``client.get_entity`` to access the
+``migrated_from_chat_id`` :tl:`Chat` or the ``linked_chat_id`` :tl:`Channel`.
+They are in the ``full.chats`` attribute:
+
+ 
+
+    if full_channel.migrated_from_chat_id:
+        migrated_from_chat = next(c for c in full.chats if c.id == full_channel.migrated_from_chat_id)
+        print(migrated_from_chat.title)
+
+    if full_channel.linked_chat_id:
+        linked_group = next(c for c in full.chats if c.id == full_channel.linked_chat_id)
+        print(linked_group.username)
+
+.. _Chat type: https://tl.telethon.dev/types/chat.html
+
+
+
+
+=== File: ./telethon-docs/concepts/botapi-vs-mtproto.rst ===
+
+.. _botapi:
+
+     ===
+HTTP Bot API vs MTProto
+     ===
+
+
+Telethon is more than just another viable alternative when developing bots
+for Telegram. If you haven't decided which wrapper library for bots to use
+yet, using Telethon from the beginning may save you some headaches later.
+
+.. contents::
+
+
+What is Bot API?
+    
+
+The `Telegram Bot API`_, also known as HTTP Bot API and from now on referred
+to as simply "Bot API" is Telegram's official way for developers to control
+their own Telegram bots. Quoting their main page:
+
+    The Bot API is an HTTP-based interface created for developers keen on
+    building bots for Telegram.
+
+    To learn how to create and set up a bot, please consult our
+    `Introduction to Bots`_ and `Bot FAQ`_.
+
+Bot API is simply an HTTP endpoint which translates your requests to it into
+MTProto calls through tdlib_, their bot backend.
+
+Configuration of your bot, such as its available commands and auto-completion,
+is configured through `@BotFather <https://t.me/BotFather>`_.
+
+
+What is MTProto?
+    
+
+MTProto_ is Telegram's own protocol to communicate with their API when you
+connect to their servers.
+
+Telethon is an alternative MTProto-based backend written entirely in Python
+and much easier to setup and use.
+
+Both official applications and third-party clients (like your own
+applications) logged in as either user or bots **can use MTProto** to
+communicate directly with Telegram's API (which is not the HTTP bot API).
+
+When we talk about MTProto, we often mean "MTProto-based clients".
+
+
+Advantages of MTProto over Bot API
+        ==
+
+MTProto clients (like Telethon) connect directly to Telegram's servers,
+which means there is no HTTP connection, no "polling" or "web hooks". This
+means **less overhead**, since the protocol used between you and the server
+is much more compact than HTTP requests with responses in wasteful JSON.
+
+Since there is a direct connection to Telegram's servers, even if their
+Bot API endpoint is down, you can still have connection to Telegram directly.
+
+Using a MTProto client, you are also not limited to the public API that
+they expose, and instead, **you have full control** of what your bot can do.
+Telethon offers you all the power with often **much easier usage** than any
+of the available Python Bot API wrappers.
+
+If your application ever needs user features because bots cannot do certain
+things, you will be able to easily login as a user and even keep your bot
+without having to learn a new library.
+
+If less overhead and full control didn't convince you to use Telethon yet,
+check out the wiki page `MTProto vs HTTP Bot API`_ with a more exhaustive
+and up-to-date list of differences.
+
+
+Migrating from Bot API to Telethon
+        ==
+
+It doesn't matter if you wrote your bot with requests_ and you were
+making API requests manually, or if you used a wrapper library like
+python-telegram-bot_ or pyTelegramBotAPI_. It's never too late to
+migrate to Telethon!
+
+If you were using an asynchronous library like aiohttp_ or a wrapper like
+aiogram_ or dumbot_, it will be even easier, because Telethon is also an
+asynchronous library.
+
+Next, we will see some examples from the most popular libraries.
+
+
+Migrating from python-telegram-bot
+----------------------------------
+
+Let's take their `echobot.py`_ example and shorten it a bit:
+
+ 
+
+    from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+
+    def start(update, context):
+        """Send a message when the command /start is issued."""
+        update.message.reply_text('Hi!')
+
+    def echo(update, context):
+        """Echo the user message."""
+        update.message.reply_text(update.message.text)
+
+    def main():
+        """Start the bot."""
+        updater = Updater("TOKEN")
+        dp = updater.dispatcher
+        dp.add_handler(CommandHandler("start", start))
+        dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+
+        updater.start_polling()
+
+        updater.idle()
+
+    if __name__ == '__main__':
+        main()
+
+
+After using Telethon:
+
+ 
+
+    from telethon import TelegramClient, events
+
+    bot = TelegramClient('bot', 11111, 'a1b2c3d4').start(bot_token='TOKEN')
+
+    @bot.on(events.NewMessage(pattern='/start'))
+    async def start(event):
+        """Send a message when the command /start is issued."""
+        await event.respond('Hi!')
+        raise events.StopPropagation
+
+    @bot.on(events.NewMessage)
+    async def echo(event):
+        """Echo the user message."""
+        await event.respond(event.text)
+
+    def main():
+        """Start the bot."""
+        bot.run_until_disconnected()
+
+    if __name__ == '__main__':
+        main()
+
+Key differences:
+
+* The recommended way to do it imports fewer things.
+* All handlers trigger by default, so we need ``events.StopPropagation``.
+* Adding handlers, responding and running is a lot less verbose.
+* Telethon needs ``async def`` and ``await``.
+* The ``bot`` isn't hidden away by ``Updater`` or ``Dispatcher``.
+
+
+Migrating from pyTelegramBotAPI
+-------------------------------
+
+Let's show another echobot from their README:
+
+ 
+
+    import telebot
+
+    bot = telebot.TeleBot("TOKEN")
+
+    @bot.message_handler(commands=['start'])
+    def send_welcome(message):
+        bot.reply_to(message, "Howdy, how are you doing?")
+
+    @bot.message_handler(func=lambda m: True)
+    def echo_all(message):
+        bot.reply_to(message, message.text)
+
+    bot.polling()
+
+Now we rewrite it to use Telethon:
+
+ 
+
+    from telethon import TelegramClient, events
+
+    bot = TelegramClient('bot', 11111, 'a1b2c3d4').start(bot_token='TOKEN')
+
+    @bot.on(events.NewMessage(pattern='/start'))
+    async def send_welcome(event):
+        await event.reply('Howdy, how are you doing?')
+
+    @bot.on(events.NewMessage)
+    async def echo_all(event):
+        await event.reply(event.text)
+
+    bot.run_until_disconnected()
+
+Key differences:
+
+* Instead of doing ``bot.reply_to(message)``, we can do ``event.reply``.
+  Note that the ``event`` behaves just like their ``message``.
+* Telethon also supports ``func=lambda m: True``, but it's not necessary.
+
+
+Migrating from aiogram
+----------------------
+
+From their GitHub:
+
+ 
+
+    from aiogram import Bot, Dispatcher, executor, types
+
+    API_TOKEN = 'BOT TOKEN HERE'
+
+    # Initialize bot and dispatcher
+    bot = Bot(token=API_TOKEN)
+    dp = Dispatcher(bot)
+
+    @dp.message_handler(commands=['start'])
+    async def send_welcome(message: types.Message):
+        """
+        This handler will be called when client send `/start` command.
+        """
+        await message.reply("Hi!\nI'm EchoBot!\nPowered by aiogram.")
+
+    @dp.message_handler(regexp='(^cat[s]?$|puss)')
+    async def cats(message: types.Message):
+        with open('data/cats.jpg', 'rb') as photo:
+            await bot.send_photo(message.chat.id, photo, caption='Cats is here 😺',
+                                 reply_to_message_id=message.message_id)
+
+    @dp.message_handler()
+    async def echo(message: types.Message):
+        await bot.send_message(message.chat.id, message.text)
+
+    if __name__ == '__main__':
+        executor.start_polling(dp, skip_updates=True)
+
+
+After rewrite:
+
+ 
+
+    from telethon import TelegramClient, events
+
+    # Initialize bot and... just the bot!
+    bot = TelegramClient('bot', 11111, 'a1b2c3d4').start(bot_token='TOKEN')
+
+    @bot.on(events.NewMessage(pattern='/start'))
+    async def send_welcome(event):
+        await event.reply('Howdy, how are you doing?')
+
+    @bot.on(events.NewMessage(pattern='(^cat[s]?$|puss)'))
+    async def cats(event):
+        await event.reply('Cats is here 😺', file='data/cats.jpg')
+
+    @bot.on(events.NewMessage)
+    async def echo_all(event):
+        await event.reply(event.text)
+
+    if __name__ == '__main__':
+        bot.run_until_disconnected()
+
+
+Key differences:
+
+* Telethon offers convenience methods to avoid retyping
+  ``bot.send_photo(message.chat.id, ...)`` all the time,
+  and instead let you type ``event.reply``.
+* Sending files is **a lot** easier. The methods for sending
+  photos, documents, audios, etc. are all the same!
+
+Migrating from dumbot
+---------------------
+
+Showcasing their subclassing example:
+
+ 
+
+    from dumbot import Bot
+
+    class Subbot(Bot):
+        async def init(self):
+            self.me = await self.getMe()
+
+        async def on_update(self, update):
+            await self.sendMessage(
+                chat_id=update.message.chat.id,
+                text='i am {}'.format(self.me.username)
+            )
+
+    Subbot(token).run()
+
+After rewriting:
+
+ 
+
+    from telethon import TelegramClient, events
+
+    class Subbot(TelegramClient):
+        def __init__(self, *a, **kw):
+            super().__init__(*a, **kw)
+            self.add_event_handler(self.on_update, events.NewMessage)
+
+        async def connect():
+            await super().connect()
+            self.me = await self.get_me()
+
+        async def on_update(event):
+            await event.reply('i am {}'.format(self.me.username))
+
+    bot = Subbot('bot', 11111, 'a1b2c3d4').start(bot_token='TOKEN')
+    bot.run_until_disconnected()
+
+
+Key differences:
+
+* Telethon method names are ``snake_case``.
+* dumbot does not offer friendly methods like ``update.reply``.
+* Telethon does not have an implicit ``on_update`` handler, so
+  we need to manually register one.
+
+
+.. _Telegram Bot API: https://core.telegram.org/bots/api
+.. _Introduction to Bots: https://core.telegram.org/bots
+.. _Bot FAQ: https://core.telegram.org/bots/faq
+.. _tdlib: https://core.telegram.org/tdlib
+.. _MTProto: https://core.telegram.org/mtproto
+.. _MTProto vs HTTP Bot API: https://github.com/LonamiWebs/Telethon/wiki/MTProto-vs-HTTP-Bot-API
+.. _requests: https://pypi.org/project/requests/
+.. _python-telegram-bot: https://python-telegram-bot.readthedocs.io
+.. _pyTelegramBotAPI: https://github.com/eternnoir/pyTelegramBotAPI
+.. _aiohttp: https://docs.aiohttp.org/en/stable
+.. _aiogram: https://aiogram.readthedocs.io
+.. _dumbot: https://github.com/Lonami/dumbot
+.. _echobot.py: https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/echobot.py
+
+
+
+
+=== File: ./telethon-docs/concepts/updates.rst ===
+
+    
+Updates in Depth
+    
+
+Properties vs. Methods
+     ==
+
+The event shown above acts just like a `custom.Message
+<telethon.tl.custom.message.Message>`, which means you
+can access all the properties it has, like ``.sender``.
+
+**However** events are different to other methods in the client, like
+`client.get_messages <telethon.client.messages.MessageMethods.get_messages>`.
+Events *may not* send information about the sender or chat, which means it
+can be `None`, but all the methods defined in the client always have this
+information so it doesn't need to be re-fetched. For this reason, you have
+``get_`` methods, which will make a network call if necessary.
+
+In short, you should do this:
+
+ 
+
+    @client.on(events.NewMessage)
+    async def handler(event):
+        # event.input_chat may be None, use event.get_input_chat()
+        chat = await event.get_input_chat()
+        sender = await event.get_sender()
+        buttons = await event.get_buttons()
+
+    async def main():
+        async for message in client.iter_messages('me', 10):
+            # Methods from the client always have these properties ready
+            chat = message.input_chat
+            sender = message.sender
+            buttons = message.buttons
+
+Notice, properties (`message.sender
+<telethon.tl.custom.message.Message.sender>`) don't need an ``await``, but
+methods (`message.get_sender
+<telethon.tl.custom.message.Message.get_sender>`) **do** need an ``await``,
+and you should use methods in events for these properties that may need network.
+
+Events Without the client
+      =
+
+The code of your application starts getting big, so you decide to
+separate the handlers into different files. But how can you access
+the client from these files? You don't need to! Just `events.register
+<telethon.events.register>` them:
+
+ 
+
+    # handlers/welcome.py
+    from telethon import events
+
+    @events.register(events.NewMessage('(?i)hello'))
+    async def handler(event):
+        client = event.client
+        await event.respond('Hey!')
+        await client.send_message('me', 'I said hello to someone')
+
+
+Registering events is a way of saying "this method is an event handler".
+You can use `telethon.events.is_handler` to check if any method is a handler.
+You can think of them as a different approach to Flask's blueprints.
+
+It's important to note that this does **not** add the handler to any client!
+You never specified the client on which the handler should be used. You only
+declared that it is a handler, and its type.
+
+To actually use the handler, you need to `client.add_event_handler
+<telethon.client.updates.UpdateMethods.add_event_handler>` to the
+client (or clients) where they should be added to:
+
+ 
+
+    # main.py
+    from telethon import TelegramClient
+    import handlers.welcome
+
+    with TelegramClient(...) as client:
+        client.add_event_handler(handlers.welcome.handler)
+        client.run_until_disconnected()
+
+
+This also means that you can register an event handler once and
+then add it to many clients without re-declaring the event.
+
+
+Events Without Decorators
+      =
+
+If for any reason you don't want to use `telethon.events.register`,
+you can explicitly pass the event handler to use to the mentioned
+`client.add_event_handler
+<telethon.client.updates.UpdateMethods.add_event_handler>`:
+
+ 
+
+    from telethon import TelegramClient, events
+
+    async def handler(event):
+        ...
+
+    with TelegramClient(...) as client:
+        client.add_event_handler(handler, events.NewMessage)
+        client.run_until_disconnected()
+
+
+Similarly, you also have `client.remove_event_handler
+<telethon.client.updates.UpdateMethods.remove_event_handler>`
+and `client.list_event_handlers
+<telethon.client.updates.UpdateMethods.list_event_handlers>`.
+
+The ``event`` argument is optional in all three methods and defaults to
+`events.Raw <telethon.events.raw.Raw>` for adding, and `None` when
+removing (so all callbacks would be removed).
+
+.. note::
+
+    The ``event`` type is ignored in `client.add_event_handler
+    <telethon.client.updates.UpdateMethods.add_event_handler>`
+    if you have used `telethon.events.register` on the ``callback``
+    before, since that's the point of using such method at all.
+
+
+Stopping Propagation of Updates
+       ===
+
+There might be cases when an event handler is supposed to be used solitary and
+it makes no sense to process any other handlers in the chain. For this case,
+it is possible to raise a `telethon.events.StopPropagation` exception which
+will cause the propagation of the update through your handlers to stop:
+
+ 
+
+    from telethon.events import StopPropagation
+
+    @client.on(events.NewMessage)
+    async def _(event):
+        # ... some conditions
+        await event.delete()
+
+        # Other handlers won't have an event to work with
+        raise StopPropagation
+
+    @client.on(events.NewMessage)
+    async def _(event):
+        # Will never be reached, because it is the second handler
+        # in the chain.
+        pass
+
+
+Remember to check :ref:`telethon-events` if you're looking for
+the methods reference.
+
+Understanding asyncio
+     =
+
+
+With `asyncio`, the library has several tasks running in the background.
+One task is used for sending requests, another task is used to receive them,
+and a third one is used to handle updates.
+
+To handle updates, you must keep your script running. You can do this in
+several ways. For instance, if you are *not* running `asyncio`'s event
+loop, you should use `client.run_until_disconnected
+<telethon.client.updates.UpdateMethods.run_until_disconnected>`:
+
+ 
+
+    import asyncio
+    from telethon import TelegramClient
+
+    client = TelegramClient(...)
+    ...
+    client.run_until_disconnected()
+
+
+Behind the scenes, this method is ``await``'ing on the `client.disconnected
+<telethon.client.telegrambaseclient.TelegramBaseClient.disconnected>` property,
+so the code above and the following are equivalent:
+
+ 
+
+    import asyncio
+    from telethon import TelegramClient
+
+    client = TelegramClient(...)
+
+    async def main():
+        await client.disconnected
+
+    asyncio.run(main())
+
+
+You could also run `client.disconnected
+<telethon.client.telegrambaseclient.TelegramBaseClient.disconnected>`
+until it completed.
+
+But if you don't want to ``await``, then you should know what you want
+to be doing instead! What matters is that you shouldn't let your script
+die. If you don't care about updates, you don't need any of this.
+
+Notice that unlike `client.disconnected
+<telethon.client.telegrambaseclient.TelegramBaseClient.disconnected>`,
+`client.run_until_disconnected
+<telethon.client.updates.UpdateMethods.run_until_disconnected>` will
+handle ``KeyboardInterrupt`` for you. This method is special and can
+also be ran while the loop is running, so you can do this:
+
+ 
+
+    async def main():
+        await client.run_until_disconnected()
+
+    loop.run_until_complete(main())
+
+Sequential Updates
+    ==
+
+If you need to process updates sequentially (i.e. not in parallel),
+you should set ``sequential_updates=True`` when creating the client:
+
+ 
+
+    with TelegramClient(..., sequential_updates=True) as client:
+        ...
+
+
+
+
+=== File: ./telethon-docs/modules/custom.rst ===
+
+   ==
+Custom package
+   ==
+
+The `telethon.tl.custom` package contains custom classes that the library
+uses in order to make working with Telegram easier. Only those that you
+are supposed to use will be documented here. You can use undocumented ones
+at your own risk.
+
+More often than not, you don't need to import these (unless you want
+type hinting), nor do you need to manually create instances of these
+classes. They are returned by client methods.
+
+.. contents::
+
+.. automodule:: telethon.tl.custom
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+AdminLogEvent
+   =
+
+.. automodule:: telethon.tl.custom.adminlogevent
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Button
+ ==
+
+.. automodule:: telethon.tl.custom.button
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+ChatGetter
+  ==
+
+.. automodule:: telethon.tl.custom.chatgetter
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Conversation
+   
+
+.. automodule:: telethon.tl.custom.conversation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Dialog
+ ==
+
+.. automodule:: telethon.tl.custom.dialog
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Draft
+ =
+
+.. automodule:: telethon.tl.custom.draft
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+File
+ 
+
+.. automodule:: telethon.tl.custom.file
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Forward
+ ===
+
+.. automodule:: telethon.tl.custom.forward
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+InlineBuilder
+   =
+
+.. automodule:: telethon.tl.custom.inlinebuilder
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+InlineResult
+   
+
+.. automodule:: telethon.tl.custom.inlineresult
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+InlineResults
+   =
+
+.. automodule:: telethon.tl.custom.inlineresults
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Message
+ ===
+
+.. automodule:: telethon.tl.custom.message
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+MessageButton
+   =
+
+.. automodule:: telethon.tl.custom.messagebutton
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+ParticipantPermissions
+     ==
+
+.. automodule:: telethon.tl.custom.participantpermissions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+QRLogin
+ ===
+
+.. automodule:: telethon.tl.custom.qrlogin
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+SenderGetter
+   
+
+.. automodule:: telethon.tl.custom.sendergetter
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+
+
+=== File: ./telethon-docs/modules/sessions.rst ===
+
+.. _telethon-sessions:
+
+  
+Sessions
+  
+
+These are the different built-in session storage that you may subclass.
+
+.. automodule:: telethon.sessions.abstract
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.sessions.memory
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.sessions.sqlite
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.sessions.string
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+
+
+=== File: ./telethon-docs/modules/errors.rst ===
+
+.. _telethon-errors:
+
+  ==
+API Errors
+  ==
+
+These are the base errors that Telegram's API may raise.
+
+See :ref:`rpc-errors` for a more in-depth explanation on how to handle all
+known possible errors and learning to determine what a method may raise.
+
+.. automodule:: telethon.errors.common
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.errors.rpcbaseerrors
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+
+
+=== File: ./telethon-docs/modules/events.rst ===
+
+.. _telethon-events:
+
+   =
+Update Events
+   =
+
+.. currentmodule:: telethon.events
+
+Every event (builder) subclasses `common.EventBuilder`,
+so all the methods in it can be used from any event builder/event instance.
+
+.. automodule:: telethon.events.common
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.newmessage
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.chataction
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.userupdate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.messageedited
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.messagedeleted
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.messageread
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.callbackquery
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.inlinequery
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.album
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events.raw
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.events
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+
+
+=== File: ./telethon-docs/modules/client.rst ===
+
+.. _telethon-client:
+
+   ==
+TelegramClient
+   ==
+
+.. currentmodule:: telethon.client
+
+The `TelegramClient <telegramclient.TelegramClient>` aggregates several mixin
+classes to provide all the common functionality in a nice, Pythonic interface.
+Each mixin has its own methods, which you all can use.
+
+**In short, to create a client you must run:**
+
+ 
+
+    from telethon import TelegramClient
+
+    client = TelegramClient(name, api_id, api_hash)
+
+    async def main():
+        # Now you can use all client methods listed below, like for example...
+        await client.send_message('me', 'Hello to myself!')
+
+    with client:
+        client.loop.run_until_complete(main())
+
+
+You **don't** need to import these `AuthMethods`, `MessageMethods`, etc.
+Together they are the `TelegramClient <telegramclient.TelegramClient>` and
+you can access all of their methods.
+
+See :ref:`client-ref` for a short summary.
+
+.. automodule:: telethon.client.telegramclient
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.telegrambaseclient
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.account
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.auth
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.bots
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.buttons
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.chats
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.dialogs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.downloads
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.messageparse
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.messages
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.updates
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.uploads
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.client.users
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+
+
+=== File: ./telethon-docs/modules/utils.rst ===
+
+.. _telethon-utils:
+
+  =
+Utilities
+  =
+
+These are the utilities that the library has to offer.
+
+.. automodule:: telethon.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+
+
+=== File: ./telethon-docs/modules/network.rst ===
+
+.. _telethon-network:
+
+    
+Connection Modes
+    
+
+The only part about network that you should worry about are
+the different connection modes, which are the following:
+
+.. automodule:: telethon.network.connection.tcpfull
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.network.connection.tcpabridged
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.network.connection.tcpintermediate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.network.connection.tcpobfuscated
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: telethon.network.connection.http
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+
+
+=== File: ./telethon-docs/modules/helpers.rst ===
+
+ ===
+Helpers
+ ===
+
+.. automodule:: telethon.helpers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+
+
+=== File: ./telethon-docs/quick-references/objects-reference.rst ===
+
+    =
+Objects Reference
+    =
+
+This is the quick reference for those objects returned by client methods
+or other useful modules that the library has to offer. They are kept in
+a separate page to help finding and discovering them.
+
+Remember that this page only shows properties and methods,
+**not attributes**. Make sure to open the full documentation
+to find out about the attributes.
+
+.. contents::
+
+
+ChatGetter
+  ==
+
+All events base `ChatGetter <telethon.tl.custom.chatgetter.ChatGetter>`,
+and some of the objects below do too, so it's important to know its methods.
+
+.. currentmodule:: telethon.tl.custom.chatgetter.ChatGetter
+
+.. autosummary::
+    :nosignatures:
+
+    chat
+    input_chat
+    chat_id
+    is_private
+    is_group
+    is_channel
+
+    get_chat
+    get_input_chat
+
+
+SenderGetter
+   
+
+Similar to `ChatGetter <telethon.tl.custom.chatgetter.ChatGetter>`, a
+`SenderGetter <telethon.tl.custom.sendergetter.SenderGetter>` is the same,
+but it works for senders instead.
+
+.. currentmodule:: telethon.tl.custom.sendergetter.SenderGetter
+
+.. autosummary::
+    :nosignatures:
+
+    sender
+    input_sender
+    sender_id
+
+    get_sender
+    get_input_sender
+
+
+Message
+ ===
+
+.. currentmodule:: telethon.tl.custom.message
+
+The `Message` type is very important, mostly because we are working
+with a library for a *messaging* platform, so messages are widely used:
+in events, when fetching history, replies, etc.
+
+It bases `ChatGetter <telethon.tl.custom.chatgetter.ChatGetter>` and
+`SenderGetter <telethon.tl.custom.sendergetter.SenderGetter>`.
+
+Properties
+----------
+
+.. note::
+
+    We document *custom properties* here, not all the attributes of the
+    `Message` (which is the information Telegram actually returns).
+
+.. currentmodule:: telethon.tl.custom.message.Message
+
+.. autosummary::
+    :nosignatures:
+
+    text
+    raw_text
+    is_reply
+    forward
+    buttons
+    button_count
+    file
+    photo
+    document
+    web_preview
+    audio
+    voice
+    video
+    video_note
+    gif
+    sticker
+    contact
+    game
+    geo
+    invoice
+    poll
+    venue
+    action_entities
+    via_bot
+    via_input_bot
+    client
+
+
+Methods
+-------
+
+.. autosummary::
+    :nosignatures:
+
+    respond
+    reply
+    forward_to
+    edit
+    delete
+    get_reply_message
+    click
+    mark_read
+    pin
+    download_media
+    get_entities_text
+    get_buttons
+
+
+File
+ 
+
+The `File <telethon.tl.custom.file.File>` type is a wrapper object
+returned by `Message.file <telethon.tl.custom.message.Message.file>`,
+and you can use it to easily access a document's attributes, such as
+its name, bot-API style file ID, etc.
+
+.. currentmodule:: telethon.tl.custom.file.File
+
+.. autosummary::
+    :nosignatures:
+
+    id
+    name
+    ext
+    mime_type
+    width
+    height
+    size
+    duration
+    title
+    performer
+    emoji
+    sticker_set
+
+
+Conversation
+   
+
+The `Conversation <telethon.tl.custom.conversation.Conversation>` object
+is returned by the `client.conversation()
+<telethon.client.dialogs.DialogMethods.conversation>` method to easily
+send and receive responses like a normal conversation.
+
+It bases `ChatGetter <telethon.tl.custom.chatgetter.ChatGetter>`.
+
+.. currentmodule:: telethon.tl.custom.conversation.Conversation
+
+.. autosummary::
+    :nosignatures:
+
+    send_message
+    send_file
+    mark_read
+    get_response
+    get_reply
+    get_edit
+    wait_read
+    wait_event
+    cancel
+    cancel_all
+
+
+AdminLogEvent
+   =
+
+The `AdminLogEvent <telethon.tl.custom.adminlogevent.AdminLogEvent>` object
+is returned by the `client.iter_admin_log()
+<telethon.client.chats.ChatMethods.iter_admin_log>` method to easily iterate
+over past "events" (deleted messages, edits, title changes, leaving members…)
+
+These are all the properties you can find in it:
+
+.. currentmodule:: telethon.tl.custom.adminlogevent.AdminLogEvent
+
+.. autosummary::
+    :nosignatures:
+
+    id
+    date
+    user_id
+    action
+    old
+    new
+    changed_about
+    changed_title
+    changed_username
+    changed_photo
+    changed_sticker_set
+    changed_message
+    deleted_message
+    changed_admin
+    changed_restrictions
+    changed_invites
+    joined
+    joined_invite
+    left
+    changed_hide_history
+    changed_signatures
+    changed_pin
+    changed_default_banned_rights
+    stopped_poll
+
+
+Button
+ ==
+
+The `Button <telethon.tl.custom.button.Button>` class is used when you login
+as a bot account to send messages with reply markup, such as inline buttons
+or custom keyboards.
+
+These are the static methods you can use to create instances of the markup:
+
+.. currentmodule:: telethon.tl.custom.button.Button
+
+.. autosummary::
+    :nosignatures:
+
+    inline
+    switch_inline
+    url
+    auth
+    text
+    request_location
+    request_phone
+    request_poll
+    clear
+    force_reply
+
+
+InlineResult
+   
+
+The `InlineResult <telethon.tl.custom.inlineresult.InlineResult>` object
+is returned inside a list by the `client.inline_query()
+<telethon.client.bots.BotMethods.inline_query>` method to make an inline
+query to a bot that supports being used in inline mode, such as
+`@like <https://t.me/like>`_.
+
+Note that the list returned is in fact a *subclass* of a list called
+`InlineResults <telethon.tl.custom.inlineresults.InlineResults>`, which,
+in addition of being a list (iterator, indexed access, etc.), has extra
+attributes and methods.
+
+These are the constants for the types, properties and methods you
+can find the individual results:
+
+.. currentmodule:: telethon.tl.custom.inlineresult.InlineResult
+
+.. autosummary::
+    :nosignatures:
+
+    ARTICLE
+    PHOTO
+    GIF
+    VIDEO
+    VIDEO_GIF
+    AUDIO
+    DOCUMENT
+    LOCATION
+    VENUE
+    CONTACT
+    GAME
+    type
+    message
+    title
+    description
+    url
+    photo
+    document
+    click
+    download_media
+
+
+Dialog
+ ==
+
+The `Dialog <telethon.tl.custom.dialog.Dialog>` object is returned when
+you call `client.iter_dialogs() <telethon.client.dialogs.DialogMethods.iter_dialogs>`.
+
+.. currentmodule:: telethon.tl.custom.dialog.Dialog
+
+.. autosummary::
+    :nosignatures:
+
+    send_message
+    archive
+    delete
+
+
+Draft
+ ==
+
+The `Draft <telethon.tl.custom.draft.Draft>` object is returned when
+you call `client.iter_drafts() <telethon.client.dialogs.DialogMethods.iter_drafts>`.
+
+.. currentmodule:: telethon.tl.custom.draft.Draft
+
+.. autosummary::
+    :nosignatures:
+
+    entity
+    input_entity
+    get_entity
+    get_input_entity
+    text
+    raw_text
+    is_empty
+    set_message
+    send
+    delete
+
+
+Utils
+ =
+
+The `telethon.utils` module has plenty of methods that make using the
+library a lot easier. Only the interesting ones will be listed here.
+
+.. currentmodule:: telethon.utils
+
+.. autosummary::
+    :nosignatures:
+
+    get_display_name
+    get_extension
+    get_inner_text
+    get_peer_id
+    resolve_id
+    pack_bot_file_id
+    resolve_bot_file_id
+    resolve_invite_link
+
+
+
+
+=== File: ./telethon-docs/quick-references/client-reference.rst ===
+
+.. _client-ref:
+
+    
+Client Reference
+    
+
+This page contains a summary of all the important methods and properties that
+you may need when using Telethon. They are sorted by relevance and are not in
+alphabetical order.
+
+You should use this page to learn about which methods are available, and
+if you need a usage example or further description of the arguments, be
+sure to follow the links.
+
+.. contents::
+
+TelegramClient
+   ==
+
+This is a summary of the methods and
+properties you will find at :ref:`telethon-client`.
+
+Auth
+----
+
+.. currentmodule:: telethon.client.auth.AuthMethods
+
+.. autosummary::
+    :nosignatures:
+
+    start
+    send_code_request
+    sign_in
+    qr_login
+    log_out
+    edit_2fa
+
+Base
+----
+
+.. py:currentmodule:: telethon.client.telegrambaseclient.TelegramBaseClient
+
+.. autosummary::
+    :nosignatures:
+
+    connect
+    disconnect
+    is_connected
+    disconnected
+    loop
+    set_proxy
+
+Messages
+--------
+
+.. py:currentmodule:: telethon.client.messages.MessageMethods
+
+.. autosummary::
+    :nosignatures:
+
+    send_message
+    edit_message
+    delete_messages
+    forward_messages
+    iter_messages
+    get_messages
+    pin_message
+    unpin_message
+    send_read_acknowledge
+
+Uploads
+-------
+
+.. py:currentmodule:: telethon.client.uploads.UploadMethods
+
+.. autosummary::
+    :nosignatures:
+
+    send_file
+    upload_file
+
+Downloads
+---------
+
+.. currentmodule:: telethon.client.downloads.DownloadMethods
+
+.. autosummary::
+    :nosignatures:
+
+    download_media
+    download_profile_photo
+    download_file
+    iter_download
+
+Dialogs
+-------
+
+.. py:currentmodule:: telethon.client.dialogs.DialogMethods
+
+.. autosummary::
+    :nosignatures:
+
+    iter_dialogs
+    get_dialogs
+    edit_folder
+    iter_drafts
+    get_drafts
+    delete_dialog
+    conversation
+
+Users
+-----
+
+.. py:currentmodule:: telethon.client.users.UserMethods
+
+.. autosummary::
+    :nosignatures:
+
+    get_me
+    is_bot
+    is_user_authorized
+    get_entity
+    get_input_entity
+    get_peer_id
+
+Chats
+-----
+
+.. currentmodule:: telethon.client.chats.ChatMethods
+
+.. autosummary::
+    :nosignatures:
+
+    iter_participants
+    get_participants
+    kick_participant
+    iter_admin_log
+    get_admin_log
+    iter_profile_photos
+    get_profile_photos
+    edit_admin
+    edit_permissions
+    get_permissions
+    get_stats
+    action
+
+Parse Mode
+----------
+
+.. py:currentmodule:: telethon.client.messageparse.MessageParseMethods
+
+.. autosummary::
+    :nosignatures:
+
+    parse_mode
+
+Updates
+-------
+
+.. py:currentmodule:: telethon.client.updates.UpdateMethods
+
+.. autosummary::
+    :nosignatures:
+
+    on
+    run_until_disconnected
+    add_event_handler
+    remove_event_handler
+    list_event_handlers
+    catch_up
+    set_receive_updates
+
+Bots
+----
+
+.. currentmodule:: telethon.client.bots.BotMethods
+
+.. autosummary::
+    :nosignatures:
+
+    inline_query
+
+Buttons
+-------
+
+.. currentmodule:: telethon.client.buttons.ButtonMethods
+
+.. autosummary::
+    :nosignatures:
+
+    build_reply_markup
+
+Account
+-------
+
+.. currentmodule:: telethon.client.account.AccountMethods
+
+.. autosummary::
+    :nosignatures:
+
+    takeout
+    end_takeout
+
+
+
+
+=== File: ./telethon-docs/quick-references/events-reference.rst ===
+
+    
+Events Reference
+    
+
+Here you will find a quick summary of all the methods
+and properties that you can access when working with events.
+
+You can access the client that creates this event by doing
+``event.client``, and you should view the description of the
+events to find out what arguments it allows on creation and
+its **attributes** (the properties will be shown here).
+
+.. important::
+
+    Remember that **all events base** `ChatGetter
+    <telethon.tl.custom.chatgetter.ChatGetter>`! Please see :ref:`faq`
+    if you don't know what this means or the implications of it.
+
+.. contents::
+
+
+NewMessage
+  ==
+
+Occurs whenever a new text message or a message with media arrives.
+
+.. note::
+
+    The new message event **should be treated as** a
+    normal `Message <telethon.tl.custom.message.Message>`, with
+    the following exceptions:
+
+    * ``pattern_match`` is the match object returned by ``pattern=``.
+    * ``message`` is **not** the message string. It's the `Message
+      <telethon.tl.custom.message.Message>` object.
+
+    Remember, this event is just a proxy over the message, so while
+    you won't see its attributes and properties, you can still access
+    them. Please see the full documentation for examples.
+
+Full documentation for the `NewMessage
+<telethon.events.newmessage.NewMessage>`.
+
+
+MessageEdited
+   =
+
+Occurs whenever a message is edited. Just like `NewMessage
+<telethon.events.newmessage.NewMessage>`, you should treat
+this event as a `Message <telethon.tl.custom.message.Message>`.
+
+Full documentation for the `MessageEdited
+<telethon.events.messageedited.MessageEdited>`.
+
+
+MessageDeleted
+   ==
+
+Occurs whenever a message is deleted. Note that this event isn't 100%
+reliable, since Telegram doesn't always notify the clients that a message
+was deleted.
+
+It only has the ``deleted_id`` and ``deleted_ids`` attributes
+(in addition to the chat if the deletion happened in a channel).
+
+Full documentation for the `MessageDeleted
+<telethon.events.messagedeleted.MessageDeleted>`.
+
+
+MessageRead
+  ===
+
+Occurs whenever one or more messages are read in a chat.
+
+Full documentation for the `MessageRead
+<telethon.events.messageread.MessageRead>`.
+
+.. currentmodule:: telethon.events.messageread.MessageRead.Event
+
+.. autosummary::
+    :nosignatures:
+
+        inbox
+        message_ids
+
+        get_messages
+        is_read
+
+
+ChatAction
+  ==
+
+Occurs on certain chat actions, such as chat title changes,
+user join or leaves, pinned messages, photo changes, etc.
+
+Full documentation for the `ChatAction
+<telethon.events.chataction.ChatAction>`.
+
+.. currentmodule:: telethon.events.chataction.ChatAction.Event
+
+.. autosummary::
+    :nosignatures:
+
+        added_by
+        kicked_by
+        user
+        input_user
+        user_id
+        users
+        input_users
+        user_ids
+
+        respond
+        reply
+        delete
+        get_pinned_message
+        get_added_by
+        get_kicked_by
+        get_user
+        get_input_user
+        get_users
+        get_input_users
+
+
+UserUpdate
+  ==
+
+Occurs whenever a user goes online, starts typing, etc.
+
+Full documentation for the `UserUpdate
+<telethon.events.userupdate.UserUpdate>`.
+
+.. currentmodule:: telethon.events.userupdate.UserUpdate.Event
+
+.. autosummary::
+    :nosignatures:
+
+        user
+        input_user
+        user_id
+
+        get_user
+        get_input_user
+
+        typing
+        uploading
+        recording
+        playing
+        cancel
+        geo
+        audio
+        round
+        video
+        contact
+        document
+        photo
+        last_seen
+        until
+        online
+        recently
+        within_weeks
+        within_months
+
+
+CallbackQuery
+   =
+
+Occurs whenever you sign in as a bot and a user
+clicks one of the inline buttons on your messages.
+
+Full documentation for the `CallbackQuery
+<telethon.events.callbackquery.CallbackQuery>`.
+
+.. currentmodule:: telethon.events.callbackquery.CallbackQuery.Event
+
+.. autosummary::
+    :nosignatures:
+
+        id
+        message_id
+        data
+        chat_instance
+        via_inline
+
+        respond
+        reply
+        edit
+        delete
+        answer
+        get_message
+
+InlineQuery
+  ===
+
+Occurs whenever you sign in as a bot and a user
+sends an inline query such as ``@bot query``.
+
+Full documentation for the `InlineQuery
+<telethon.events.inlinequery.InlineQuery>`.
+
+.. currentmodule:: telethon.events.inlinequery.InlineQuery.Event
+
+.. autosummary::
+    :nosignatures:
+
+        id
+        text
+        offset
+        geo
+        builder
+
+        answer
+
+Album
+ =
+
+Occurs whenever you receive an entire album.
+
+Full documentation for the `Album
+<telethon.events.album.Album>`.
+
+.. currentmodule:: telethon.events.album.Album.Event
+
+.. autosummary::
+    :nosignatures:
+
+        grouped_id
+        text
+        raw_text
+        is_reply
+        forward
+
+        get_reply_message
+        respond
+        reply
+        forward_to
+        edit
+        delete
+        mark_read
+        pin
+
+Raw
+===
+
+Raw events are not actual events. Instead, they are the raw
+:tl:`Update` object that Telegram sends. You normally shouldn't
+need these.
+
+
+
+
+=== File: ./telethon-docs/quick-references/faq.rst ===
+
+.. _faq:
+
+===
+FAQ
+===
+
+Let's start the quick references section with some useful tips to keep in
+mind, with the hope that you will understand why certain things work the
+way that they do.
+
+.. contents::
+
+
+Code without errors doesn't work
+        
+
+Then it probably has errors, but you haven't enabled logging yet.
+To enable logging, at the following code to the top of your main file:
+
+ 
+
+    import logging
+    logging.basicConfig(format='[%(levelname) %(asctime)s] %(name)s: %(message)s',
+                        level=logging.WARNING)
+
+You can change the logging level to be something different, from less to more information:
+
+ 
+
+    level=logging.CRITICAL  # won't show errors (same as disabled)
+    level=logging.ERROR     # will only show errors that you didn't handle
+    level=logging.WARNING   # will also show messages with medium severity, such as internal Telegram issues
+    level=logging.INFO      # will also show informational messages, such as connection or disconnections
+    level=logging.DEBUG     # will show a lot of output to help debugging issues in the library
+
+See the official Python documentation for more information on logging_.
+
+
+How can I except FloodWaitError?
+        
+
+You can use all errors from the API by importing:
+
+ 
+
+    from telethon import errors
+
+And except them as such:
+
+ 
+
+    try:
+        await client.send_message(chat, 'Hi')
+    except errors.FloodWaitError as e:
+        # e.seconds is how many seconds you have
+        # to wait before making the request again.
+        print('Flood for', e.seconds)
+
+
+My account was deleted/limited when using the library
+             =
+
+First and foremost, **this is not a problem exclusive to Telethon.
+Any third-party library is prone to cause the accounts to appear banned.**
+Even official applications can make Telegram ban an account under certain
+circumstances. Third-party libraries such as Telethon are a lot easier to
+use, and as such, they are misused to spam, which causes Telegram to learn
+certain patterns and ban suspicious activity.
+
+There is no point in Telethon trying to circumvent this. Even if it succeeded,
+spammers would then abuse the library again, and the cycle would repeat.
+
+The library will only do things that you tell it to do. If you use
+the library with bad intentions, Telegram will hopefully ban you.
+
+However, you may also be part of a limited country, such as Iran or Russia.
+In that case, we have bad news for you. Telegram is much more likely to ban
+these numbers, as they are often used to spam other accounts, likely through
+the use of libraries like this one. The best advice we can give you is to not
+abuse the API, like calling many requests really quickly.
+
+We have also had reports from Kazakhstan and China, where connecting
+would fail. To solve these connection problems, you should use a proxy.
+
+Telegram may also ban virtual (VoIP) phone numbers,
+as again, they're likely to be used for spam.
+
+More recently (year 2023 onwards), Telegram has started putting a lot more
+measures to prevent spam (with even additions such as anonymous participants
+in groups or the inability to fetch group members at all). This means some
+of the anti-spam measures have gotten more aggressive.
+
+The recommendation has usually been to use the library only on well-established
+accounts (and not an account you just created), and to not perform actions that
+could be seen as abuse. Telegram decides what those actions are, and they're
+free to change how they operate at any time.
+
+If you want to check if your account has been limited,
+simply send a private message to `@SpamBot`_ through Telegram itself.
+You should notice this by getting errors like ``PeerFloodError``,
+which means you're limited, for instance,
+when sending a message to some accounts but not others.
+
+For more discussion, please see `issue 297`_.
+
+
+How can I use a proxy?
+     ==
+
+This was one of the first things described in :ref:`signing-in`.
+
+
+How do I access a field?
+      
+
+This is basic Python knowledge. You should use the dot operator:
+
+ 
+
+    me = await client.get_me()
+    print(me.username)
+    #       ^ we used the dot operator to access the username attribute
+
+    result = await client(functions.photos.GetUserPhotosRequest(
+        user_id='me',
+        offset=0,
+        max_id=0,
+        limit=100
+    ))
+
+    # Working with list is also pretty basic
+    print(result.photos[0].sizes[-1].type)
+    #           ^       ^ ^       ^ ^
+    #           |       | |       | \ type
+    #           |       | |       \ last size
+    #           |       | \ list of sizes
+    #  access   |       \ first photo from the list
+    #  the...   \ list of photos
+    #
+    # To print all, you could do (or mix-and-match):
+    for photo in result.photos:
+        for size in photo.sizes:
+            print(size.type)
+
+
+AttributeError: 'coroutine' object has no attribute 'id'
+              
+
+You either forgot to:
+
+ 
+
+    import telethon.sync
+    #              ^^^^^ import sync
+
+Or:
+
+ 
+
+    async def handler(event):
+        me = await client.get_me()
+        #    ^^^^^ note the await
+        print(me.username)
+
+
+sqlite3.OperationalError: database is locked
+           
+
+An older process is still running and is using the same ``'session'`` file.
+
+This error occurs when **two or more clients use the same session**,
+that is, when you write the same session name to be used in the client:
+
+* You have an older process using the same session file.
+* You have two different scripts running (interactive sessions count too).
+* You have two clients in the same script running at the same time.
+
+The solution is, if you need two clients, use two sessions. If the
+problem persists and you're on Linux, you can use ``fuser my.session``
+to find out the process locking the file. As a last resort, you can
+reboot your system.
+
+If you really dislike SQLite, use a different session storage. There
+is an entire section covering that at :ref:`sessions`.
+
+
+event.chat or event.sender is None
+        ==
+
+Telegram doesn't always send this information in order to save bandwidth.
+If you need the information, you should fetch it yourself, since the library
+won't do unnecessary work unless you need to:
+
+ 
+
+    async def handler(event):
+        chat = await event.get_chat()
+        sender = await event.get_sender()
+
+
+File download is slow or sending files takes too long
+             =
+
+The communication with Telegram is encrypted. Encryption requires a lot of
+math, and doing it in pure Python is very slow. ``cryptg`` is a library which
+containns the encryption functions used by Telethon. If it is installed (via
+``pip install cryptg``), it will automatically be used and should provide
+a considerable speed boost. You can know whether it's used by configuring
+``logging`` (at ``INFO`` level or lower) *before* importing ``telethon``.
+
+Note that the library does *not* download or upload files in parallel, which
+can also help with the speed of downloading or uploading a single file. There
+are snippets online implementing that. The reason why this is not built-in
+is because the limiting factor in the long run are ``FloodWaitError``, and
+using parallel download or uploads only makes them occur sooner.
+
+
+What does "Server sent a very new message with ID" mean?
+              
+
+You may also see this error as "Server sent a very old message with ID".
+
+This is a security feature from Telethon that cannot be disabled and is
+meant to protect you against replay attacks.
+
+When this message is incorrectly reported as a "bug",
+the most common patterns seem to be:
+
+* Your system time is incorrect.
+* The proxy you're using may be interfering somehow.
+* The Telethon session is being used or has been used from somewhere else.
+  Make sure that you created the session from Telethon, and are not using the
+  same session anywhere else. If you need to use the same account from
+  multiple places, login and use a different session for each place you need.
+
+
+What does "Server replied with a wrong session ID" mean?
+              
+
+This is a security feature from Telethon that cannot be disabled and is
+meant to protect you against unwanted session reuse.
+
+When this message is reported as a "bug", the most common patterns seem to be:
+
+* The proxy you're using may be interfering somehow.
+* The Telethon session is being used or has been used from somewhere else.
+  Make sure that you created the session from Telethon, and are not using the
+  same session anywhere else. If you need to use the same account from
+  multiple places, login and use a different session for each place you need.
+* You may be using multiple connections to the Telegram server, which seems
+  to confuse Telegram.
+
+Most of the time it should be safe to ignore this warning. If the library
+still doesn't behave correctly, make sure to check if any of the above bullet
+points applies in your case and try to work around it.
+
+If the issue persists and there is a way to reliably reproduce this error,
+please add a comment with any additional details you can provide to
+`issue 3759`_, and perhaps some additional investigation can be done
+(but it's unlikely, as Telegram *is* sending unexpected data).
+
+
+What does "Could not find a matching Constructor ID for the TLObject" mean?
+                  ===
+
+Telegram uses "layers", which you can think of as "versions" of the API they
+offer. When Telethon reads responses that the Telegram servers send, these
+need to be deserialized (into what Telethon calls "TLObjects").
+
+Every Telethon version understands a single Telegram layer. When Telethon
+connects to Telegram, both agree on the layer to use. If the layers don't
+match, Telegram may send certain objects which Telethon no longer understands.
+
+When this message is reported as a "bug", the most common patterns seem to be
+that the Telethon session is being used or has been used from somewhere else.
+Make sure that you created the session from Telethon, and are not using the
+same session anywhere else. If you need to use the same account from
+multiple places, login and use a different session for each place you need.
+
+
+What does "Task was destroyed but it is pending" mean?
+             ==
+
+Your script likely finished abruptly, the ``asyncio`` event loop got
+destroyed, and the library did not get a chance to properly close the
+connection and close the session.
+
+Make sure you're either using the context manager for the client or always
+call ``await client.disconnect()`` (by e.g. using a ``try/finally``).
+
+
+What does "The asyncio event loop must not change after connection" mean?
+                  =
+
+Telethon uses ``asyncio``, and makes use of things like tasks and queues
+internally to manage the connection to the server and match responses to the
+requests you make. Most of them are initialized after the client is connected.
+
+For example, if the library expects a result to a request made in loop A, but
+you attempt to get that result in loop B, you will very likely find a deadlock.
+To avoid a deadlock, the library checks to make sure the loop in use is the
+same as the one used to initialize everything, and if not, it throws an error.
+
+The most common cause is ``asyncio.run``, since it creates a new event loop.
+If you ``asyncio.run`` a function to create the client and set it up, and then
+you ``asyncio.run`` another function to do work, things won't work, so the
+library throws an error early to let you know something is wrong.
+
+Instead, it's often a good idea to have a single ``async def main`` and simply
+``asyncio.run()`` it and do all the work there. From it, you're also able to
+call other ``async def`` without having to touch ``asyncio.run`` again:
+
+ 
+
+    # It's fine to create the client outside as long as you don't connect
+    client = TelegramClient(...)
+
+    async def main():
+        # Now the client will connect, so the loop must not change from now on.
+        # But as long as you do all the work inside main, including calling
+        # other async functions, things will work.
+        async with client:
+            ....
+
+    if __name__ == '__main__':
+        asyncio.run(main())
+
+Be sure to read the ``asyncio`` documentation if you want a better
+understanding of event loop, tasks, and what functions you can use.
+
+
+What does "bases ChatGetter" mean?
+        ==
+
+In Python, classes can base others. This is called `inheritance
+<https://ddg.gg/python%20inheritance>`_. What it means is that
+"if a class bases another, you can use the other's methods too".
+
+For example, `Message <telethon.tl.custom.message.Message>` *bases*
+`ChatGetter <telethon.tl.custom.chatgetter.ChatGetter>`. In turn,
+`ChatGetter <telethon.tl.custom.chatgetter.ChatGetter>` defines
+things like `obj.chat_id <telethon.tl.custom.chatgetter.ChatGetter>`.
+
+So if you have a message, you can access that too:
+
+ 
+
+    # ChatGetter has a chat_id property, and Message bases ChatGetter.
+    # Thus you can use ChatGetter properties and methods from Message
+    print(message.chat_id)
+
+
+Telegram has a lot to offer, and inheritance helps the library reduce
+boilerplate, so it's important to know this concept. For newcomers,
+this may be a problem, so we explain what it means here in the FAQ.
+
+Can I send files by ID?
+     ===
+
+When people talk about IDs, they often refer to one of two things:
+the integer ID inside media, and a random-looking long string.
+
+You cannot use the integer ID to send media. Generally speaking, sending media
+requires a combination of ID, ``access_hash`` and ``file_reference``.
+The first two are integers, while the last one is a random ``bytes`` sequence.
+
+* The integer ``id`` will always be the same for every account, so every user
+  or bot looking at a particular media file, will see a consistent ID.
+* The ``access_hash`` will always be the same for a given account, but
+  different accounts will each see their own, different ``access_hash``.
+  This makes it impossible to get media object from one account and use it in
+  another. The other account must fetch the media object itself.
+* The ``file_reference`` is random for everyone and will only work for a few
+  hours before it expires. It must be refetched before the media can be used
+  (to either resend the media or download it).
+
+The second type of "`file ID <https://core.telegram.org/bots/api#inputfile>`_"
+people refer to is a concept from the HTTP Bot API. It's a custom format which
+encodes enough information to use the media.
+
+Telethon provides an old version of these HTTP Bot API-style file IDs via
+``message.file.id``, however, this feature is no longer maintained, so it may
+not work. It will be removed in future versions. Nonetheless, it is possible
+to find a different Python package (or write your own) to parse these file IDs
+and construct the necessary input file objects to send or download the media.
+
+
+Can I use Flask with the library?
+        =
+
+Yes, if you know what you are doing. However, you will probably have a
+lot of headaches to get threads and asyncio to work together. Instead,
+consider using `Quart <https://pgjones.gitlab.io/quart/>`_, an asyncio-based
+alternative to `Flask <flask.pocoo.org/>`_.
+
+Check out `quart_login.py`_ for an example web-application based on Quart.
+
+Can I use Anaconda/Spyder/IPython with the library?
+            ===
+
+Yes, but these interpreters run the asyncio event loop implicitly,
+which interferes with the ``telethon.sync`` magic module.
+
+If you use them, you should **not** import ``sync``:
+
+ 
+
+    # Change any of these...:
+    from telethon import TelegramClient, sync, ...
+    from telethon.sync import TelegramClient, ...
+
+    # ...with this:
+    from telethon import TelegramClient, ...
+
+You are also more likely to get "sqlite3.OperationalError: database is locked"
+with them. If they cause too much trouble, just write your code in a ``.py``
+file and run that, or use the normal ``python`` interpreter.
+
+
+telethon.events.userupdate.UserUpdate(chats=None, *, blacklist_chats=False, func=None)
+Bases: EventBuilder
+
+Occurs whenever a user goes online, starts typing, etc.
+
+Example
+from telethon import events
+
+@client.on(events.UserUpdate)
+async def handler(event):
+    # If someone is uploading, say something
+    if event.uploading:
+        await client.send_message(event.user_id, 'What are you sending?')
+class Event(peer, *, status=None, chat_peer=None, typing=None)
+Bases: EventCommon, SenderGetter
+
+Represents the event of a user update such as gone online, started typing, etc.
+
+Members:
+status (UserStatus, optional):
+The user status if the update is about going online or offline.
+
+You should check this attribute first before checking any of the seen within properties, since they will all be None if the status is not set.
+action (SendMessageAction, optional):
+The “typing” action if any the user is performing if any.
+
+You should check this attribute first before checking any of the typing properties, since they will all be None if the action is not set.
+__annotations__ = {}
+property audio
+True if what’s being recorded/uploaded is an audio.
+property cancel
+True if the action was cancelling other actions.
+property contact
+True if what’s being uploaded (selected) is a contact.
+property document
+True if what’s being uploaded is document.
+property geo
+True if what’s being uploaded is a geo.
+async get_input_user()
+Alias for get_input_sender.
+async get_user()
+Alias for get_sender.
+property input_user
+Alias for input_sender.
+property last_seen
+Exact datetime.datetime when the user was last seen if known.
+property online
+True if the user is currently online,
+ 
+property photo
+True if what’s being uploaded is a photo.
+property playing
+True if the action is playing a game.
+ 
+property recently
+True if the user was seen within a day.
+property recording
+True if the action is recording something.
+property round
+True if what’s being recorded/uploaded is a round video.
+property sticker
+True if what’s being uploaded is a sticker.
+ 
+property typing
+True if the action is typing a message.
+property until
+The datetime.datetime until when the user should appear online.
+property uploading
+True if the action is uploading something.
+ 
+property user
+Alias for sender.
+property user_id
+Alias for sender_id.
+ 
+property video
+True if what’s being recorded/uploaded is an video.
+property within_months
+True if the user was seen within 30 days.
+ 
+property within_weeks
+True if the user was seen within 7 days.
+__annotations__ = {}
+classmethod build(update, others=None, self_id=None)
+Builds an event for the given update if possible, or returns None.
+
+others are the rest of updates that came in the same container as the current update.
+
+self_id should be the current user’s ID, since it is required for some events which lack this information but still need it.
+class telethon.events.messageedited.MessageEdited(chats=None, *, blacklist_chats=False, func=None, incoming=None, outgoing=None, from_users=None, forwards=None, pattern=None)
+Bases: NewMessage
+
+Occurs whenever a message is edited. Just like NewMessage, you should treat this event as a Message.
+
+Warning
+
+On channels, Message.out will be True if you sent the message originally, not if you edited it! This can be dangerous if you run outgoing commands on edits.
+
+Some examples follow:
+
+You send a message “A”, out is True.
+You edit “A” to “B”, out is True.
+Someone else edits “B” to “C”, out is True (be careful!).
+Someone sends “X”, out is False.
+Someone edits “X” to “Y”, out is False.
+You edit “Y” to “Z”, out is False.
+Since there are useful cases where you need the right out value, the library cannot do anything automatically to help you. Instead, consider using from_users='me' (it won’t work in broadcast channels at all since the sender is the channel and not you).
+Example
+from telethon import events
+
+@client.on(events.MessageEdited)
+async def handler(event):
+    # Log the date of new edits
+    print('Message', event.id, 'changed at', event.date)
+class Event(message)
+Bases: Event
+
+__annotations__ = {}
+__annotations__ = {}
+classmethod build(update, others=None, self_id=None)
+Builds an event for the given update if possible, or returns None.
+
+others are the rest of updates that came in the same container as the current update.
+
+self_id should be the current user’s ID, since it is required for some events which lack this information but still need it.
+class telethon.events.messagedeleted.MessageDeleted(chats=None, *, blacklist_chats=False, func=None)
+Bases: EventBuilder
+
+Occurs whenever a message is deleted. Note that this event isn’t 100% reliable, since Telegram doesn’t always notify the clients that a message was deleted.
+
+Important
+
+Telegram does not send information about where a message was deleted if it occurs in private conversations with other users or in small group chats, because message IDs are unique and you can identify the chat with the message ID alone if you saved it previously.
+
+Telethon does not save information of where messages occur, so it cannot know in which chat a message was deleted (this will only work in channels, where the channel ID is present).
+
+This means that the chats= parameter will not work reliably, unless you intend on working with channels and super-groups only.
+Example
+from telethon import events
+
+@client.on(events.MessageDeleted)
+async def handler(event):
+    # Log all deleted message IDs
+    for msg_id in event.deleted_ids:
+        print('Message', msg_id, 'was deleted in', event.chat_id)
+class Event(deleted_ids, peer)
+Bases: EventCommon
+
+__annotations__ = {}
+__annotations__ = {}
+classmethod build(update, others=None, self_id=None)
+Builds an event for the given update if possible, or returns None.
+
+others are the rest of updates that came in the same container as the current update.
+
+self_id should be the current user’s ID, since it is required for some events which lack this information but still need it.
+class telethon.events.messageread.MessageRead(chats=None, *, blacklist_chats=False, func=None, inbox=False)
+Bases: EventBuilder
+
+Occurs whenever one or more messages are read in a chat.
+
+Args:
+inbox (bool, optional):
+If this argument is True, then when you read someone else’s messages the event will be fired. By default (False) only when messages you sent are read by someone else will fire it.
+Example
+from telethon import events
+
+@client.on(events.MessageRead)
+async def handler(event):
+    # Log when someone reads your messages
+    print('Someone has read all your messages until', event.max_id)
+
+@client.on(events.MessageRead(inbox=True))
+async def handler(event):
+    # Log when you read message in a chat (from your "inbox")
+    print('You have read messages until', event.max_id)
+class Event(peer=None, max_id=None, out=False, contents=False, message_ids=None)
+Bases: EventCommon
+
+Represents the event of one or more messages being read.
+
+Members:
+max_id (int):
+Up to which message ID has been read. Every message with an ID equal or lower to it have been read.
+outbox (bool):
+True if someone else has read your messages.
+contents (bool):
+True if what was read were the contents of a message. This will be the case when e.g. you play a voice note. It may only be set on inbox events.
+__annotations__ = {}
+__contains__(message)
+True if the message(s) are read message.
+async get_messages()
+Returns the list of Message which contents’ were read.
+
+Use is_read() if you need to check whether a message was read instead checking if it’s in here.
+property inbox
+True if you have read someone else’s messages.
+is_read(message)
+Returns True if the given message (or its ID) has been read.
+
+If a list-like argument is provided, this method will return a list of booleans indicating which messages have been read.
+property message_ids
+The IDs of the messages which contents’ were read.
+
+Use is_read() if you need to check whether a message was read instead checking if it’s in here.
+__annotations__ = {}
+classmethod build(update, others=None, self_id=None)
+Builds an event for the given update if possible, or returns None.
+
+others are the rest of updates that came in the same container as the current update.
+
+self_id should be the current user’s ID, since it is required for some events which lack this information but still need it.
+filter(event)
+Returns a truthy value if the event passed the filter and should be used, or falsy otherwise. The return value may need to be awaited.
+
+The events must have been resolved before this can be called.
+class telethon.events.callbackquery.CallbackQuery(chats=None, *, blacklist_chats=False, func=None, data=None, pattern=None)
+Bases: EventBuilder
+
+Occurs whenever you sign in as a bot and a user clicks one of the inline buttons on your messages.
+
+Note that the chats parameter will not work with normal IDs or peers if the clicked inline button comes from a “via bot” message. The chats parameter also supports checking against the chat_instance which should be used for inline callbacks.
+
+Args:
+data (bytes, str, callable, optional):
+If set, the inline button payload data must match this data. A UTF-8 string can also be given, a regex or a callable. For instance, to check against 'data_1' and 'data_2' you can use re.compile(b'data_').
+pattern (bytes, str, callable, Pattern, optional):
+If set, only buttons with payload matching this pattern will be handled. You can specify a regex-like string which will be matched against the payload data, a callable function that returns True if a the payload data is acceptable, or a compiled regex pattern.
+Example
+from telethon import events, Button
+
+# Handle all callback queries and check data inside the handler
+@client.on(events.CallbackQuery)
+async def handler(event):
+    if event.data == b'yes':
+        await event.answer('Correct answer!')
+
+# Handle only callback queries with data being b'no'
+@client.on(events.CallbackQuery(data=b'no'))
+async def handler(event):
+    # Pop-up message with alert
+    await event.answer('Wrong answer!', alert=True)
+
+# Send a message with buttons users can click
+async def main():
+    await client.send_message(user, 'Yes or no?', buttons=[
+        Button.inline('Yes!', b'yes'),
+        Button.inline('Nope', b'no')
+    ])
+class Event(query, peer, msg_id)
+Bases: EventCommon, SenderGetter
+
+Represents the event of a new callback query.
+
+Members:
+query (UpdateBotCallbackQuery):
+The original UpdateBotCallbackQuery.
+data_match (obj, optional):
+The object returned by the data= parameter when creating the event builder, if any. Similar to pattern_match for the new message event.
+pattern_match (obj, optional):
+Alias for data_match.
+__annotations__ = {}
+async answer(message=None, cache_time=0, *, url=None, alert=False)
+Answers the callback query (and stops the loading circle).
+
+Args:
+message (str, optional):
+The toast message to show feedback to the user.
+cache_time (int, optional):
+For how long this result should be cached on the user’s client. Defaults to 0 for no cache.
+url (str, optional):
+The URL to be opened in the user’s client. Note that the only valid URLs are those of games your bot has, or alternatively a ‘t.me/your_bot?start=xyz’ parameter.
+alert (bool, optional):
+Whether an alert (a pop-up dialog) should be used instead of showing a toast. Defaults to False.
+property chat_instance
+Unique identifier for the chat where the callback occurred. Useful for high scores in games.
+property data
+Returns the data payload from the original inline button.
+async delete(*args, **kwargs)
+Deletes the message. Shorthand for telethon.client.messages.MessageMethods.delete_messages with entity and message_ids already set.
+
+If you need to delete more than one message at once, don’t use this delete method. Use a telethon.client.telegramclient.TelegramClient instance directly.
+
+This method also creates a task to answer the callback.
+
+This method will likely fail if via_inline is True.
+async edit(*args, **kwargs)
+Edits the message. Shorthand for telethon.client.messages.MessageMethods.edit_message with the entity set to the correct InputBotInlineMessageID or InputBotInlineMessageID64.
+
+Returns True if the edit was successful.
+
+This method also creates a task to answer the callback.
+
+Note
+
+This method won’t respect the previous message unlike Message.edit, since the message object is normally not present.
+async get_message()
+Returns the message to which the clicked inline button belongs.
+property id
+Returns the query ID. The user clicking the inline button is the one who generated this random ID.
+property message_id
+Returns the message ID to which the clicked inline button belongs.
+async reply(*args, **kwargs)
+Replies to the message (as a reply). Shorthand for telethon.client.messages.MessageMethods.send_message with both entity and reply_to already set.
+
+This method also creates a task to answer the callback.
+
+This method will likely fail if via_inline is True.
+async respond(*args, **kwargs)
+Responds to the message (not as a reply). Shorthand for telethon.client.messages.MessageMethods.send_message with entity already set.
+
+This method also creates a task to answer the callback.
+
+This method will likely fail if via_inline is True.
+property via_inline
+Whether this callback was generated from an inline button sent via an inline query or not. If the bot sent the message itself with buttons, and one of those is clicked, this will be False. If a user sent the message coming from an inline query to the bot, and one of those is clicked, this will be True.
+
+If it’s True, it’s likely that the bot is not in the chat, so methods like respond or delete won’t work (but edit will always work).
+__annotations__ = {}
+classmethod build(update, others=None, self_id=None)
+Builds an event for the given update if possible, or returns None.
+
+others are the rest of updates that came in the same container as the current update.
+
+self_id should be the current user’s ID, since it is required for some events which lack this information but still need it.
+filter(event)
+Returns a truthy value if the event passed the filter and should be used, or falsy otherwise. The return value may need to be awaited.
+
+The events must have been resolved before this can be called.
+class telethon.events.inlinequery.InlineQuery(users=None, *, blacklist_users=False, func=None, pattern=None)
+Bases: EventBuilder
+
+Occurs whenever you sign in as a bot and a user sends an inline query such as @bot query.
+
+Args:
+users (entity, optional):
+May be one or more entities (username/peer/etc.), preferably IDs. By default, only inline queries from these users will be handled.
+blacklist_users (bool, optional):
+Whether to treat the users as a blacklist instead of as a whitelist (default). This means that every chat will be handled except those specified in users which will be ignored if blacklist_users=True.
+pattern (str, callable, Pattern, optional):
+If set, only queries matching this pattern will be handled. You can specify a regex-like string which will be matched against the message, a callable function that returns True if a message is acceptable, or a compiled regex pattern.
+Example
+from telethon import events
+
+@client.on(events.InlineQuery)
+async def handler(event):
+    builder = event.builder
+
+    # Two options (convert user text to UPPERCASE or lowercase)
+    await event.answer([
+        builder.article('UPPERCASE', text=event.text.upper()),
+        builder.article('lowercase', text=event.text.lower()),
+    ])
+class Event(query)
+Bases: EventCommon, SenderGetter
+
+Represents the event of a new callback query.
+
+Members:
+query (UpdateBotInlineQuery):
+The original UpdateBotInlineQuery.
+
+Make sure to access the text property of the query if you want the text rather than the actual query object.
+pattern_match (obj, optional):
+The resulting object from calling the passed pattern function, which is re.compile(...).match by default.
+__annotations__ = {}
+async answer(results=None, cache_time=0, *, gallery=False, next_offset=None, private=False, switch_pm=None, switch_pm_param='')
+Answers the inline query with the given results.
+
+See the documentation for builder to know what kind of answers can be given.
+
+Args:
+results (list, optional):
+A list of InputBotInlineResult to use. You should use builder to create these:
+
+builder = inline.builder
+r1 = builder.article('Be nice', text='Have a nice day')
+r2 = builder.article('Be bad', text="I don't like you")
+await inline.answer([r1, r2])
+You can send up to 50 results as documented in https://core.telegram.org/bots/api#answerinlinequery. Sending more will raise ResultsTooMuchError, and you should consider using next_offset to paginate them.
+cache_time (int, optional):
+For how long this result should be cached on the user’s client. Defaults to 0 for no cache.
+gallery (bool, optional):
+Whether the results should show as a gallery (grid) or not.
+next_offset (str, optional):
+The offset the client will send when the user scrolls the results and it repeats the request.
+private (bool, optional):
+Whether the results should be cached by Telegram (not private) or by the user’s client (private).
+switch_pm (str, optional):
+If set, this text will be shown in the results to allow the user to switch to private messages.
+switch_pm_param (str, optional):
+Optional parameter to start the bot with if switch_pm was used.
+Example:
+
+@bot.on(events.InlineQuery)
+async def handler(event):
+    builder = event.builder
+
+    rev_text = event.text[::-1]
+    await event.answer([
+        builder.article('Reverse text', text=rev_text),
+        builder.photo('/path/to/photo.jpg')
+    ])
+property builder
+Returns a new InlineBuilder instance.
+property geo
+If the user location is requested when using inline mode and the user’s device is able to send it, this will return the GeoPoint with the position of the user.
+property id
+Returns the unique identifier for the query ID.
+property offset
+The string the user’s client used as an offset for the query. This will either be empty or equal to offsets passed to answer.
+property text
+Returns the text the user used to make the inline query.
+__annotations__ = {}
+classmethod build(update, others=None, self_id=None)
+Builds an event for the given update if possible, or returns None.
+
+others are the rest of updates that came in the same container as the current update.
+
+self_id should be the current user’s ID, since it is required for some events which lack this information but still need it.
+filter(event)
+Returns a truthy value if the event passed the filter and should be used, or falsy otherwise. The return value may need to be awaited.
+
+The events must have been resolved before this can be called.
+class telethon.events.album.Album(chats=None, *, blacklist_chats=False, func=None)
+Bases: EventBuilder
+
+Occurs whenever you receive an album. This event only exists to ease dealing with an unknown amount of messages that belong to the same album.
+
+Example
+from telethon import events
+
+@client.on(events.Album)
+async def handler(event):
+    # Counting how many photos or videos the album has
+    print('Got an album with', len(event), 'items')
+
+    # Forwarding the album as a whole to some chat
+    event.forward_to(chat)
+
+    # Printing the caption
+    print(event.text)
+
+    # Replying to the fifth item in the album
+    await event.messages[4].reply('Cool!')
+class Event(messages)
+Bases: EventCommon, SenderGetter
+
+Represents the event of a new album.
+
+Members:
+messages (Sequence[Message]):
+The list of messages belonging to the same album.
+__annotations__ = {}
+__getitem__(n)
+Access the n’th message in the album.
+
+Equivalent to event.messages[n].
+__iter__()
+Iterate over the messages in the album.
+
+Equivalent to iter(self.messages).
+__len__()
+Return the amount of messages in the album.
+
+Equivalent to len(self.messages).
+async delete(*args, **kwargs)
+Deletes the entire album. You’re responsible for checking whether you have the permission to do so, or to except the error otherwise. Shorthand for telethon.client.messages.MessageMethods.delete_messages with entity and message_ids already set.
+async edit(*args, **kwargs)
+Edits the first caption or the message, or the first messages’ caption if no caption is set, iff it’s outgoing. Shorthand for telethon.client.messages.MessageMethods.edit_message with both entity and message already set.
+
+Returns None if the message was incoming, or the edited Message otherwise.
+
+Note
+
+This is different from client.edit_message and will respect the previous state of the message. For example, if the message didn’t have a link preview, the edit won’t add one by default, and you should force it by setting it to True if you want it.
+
+This is generally the most desired and convenient behaviour, and will work for link previews and message buttons.
+property forward
+The Forward information for the first message in the album if it was forwarded.
+async forward_to(*args, **kwargs)
+Forwards the entire album. Shorthand for telethon.client.messages.MessageMethods.forward_messages with both messages and from_peer already set.
+async get_reply_message()
+The Message that this album is replying to, or None.
+
+The result will be cached after its first use.
+property grouped_id
+The shared grouped_id between all the messages.
+property is_reply
+True if the album is a reply to some other message.
+
+Remember that you can access the ID of the message this one is replying to through reply_to_msg_id, and the Message object with get_reply_message().
+async mark_read()
+Marks the entire album as read. Shorthand for client.send_read_acknowledge() with both entity and message already set.
+async pin(*, notify=False)
+Pins the first photo in the album. Shorthand for telethon.client.messages.MessageMethods.pin_message with both entity and message already set.
+property raw_text
+The raw message text of the first photo with a caption, ignoring any formatting.
+async reply(*args, **kwargs)
+Replies to the first photo in the album (as a reply). Shorthand for telethon.client.messages.MessageMethods.send_message with both entity and reply_to already set.
+async respond(*args, **kwargs)
+Responds to the album (not as a reply). Shorthand for telethon.client.messages.MessageMethods.send_message with entity already set.
+property text
+The message text of the first photo with a caption, formatted using the client’s default parse mode.
+__annotations__ = {}
+classmethod build(update, others=None, self_id=None)
+Builds an event for the given update if possible, or returns None.
+
+others are the rest of updates that came in the same container as the current update.
+
+self_id should be the current user’s ID, since it is required for some events which lack this information but still need it.
+filter(event)
+Returns a truthy value if the event passed the filter and should be used, or falsy otherwise. The return value may need to be awaited.
+
+The events must have been resolved before this can be called.
+class telethon.events.album.AlbumHack(client, event)
+Bases: object
+
+When receiving an album from a different data-center, they will come in separate Updates, so we need to temporarily remember them for a while and only after produce the event.
+
+Of course events are not designed for this kind of wizardy, so this is a dirty hack that gets the job done.
+
+When cleaning up the code base we may want to figure out a better way to do this, or just leave the album problem to the users; the update handling code is bad enough as it is.
+
+__weakref__
+list of weak references to the object
+async deliver_event()
+extend(messages)
+File
+
+class telethon.tl.custom.file.File(media)
+Bases: object
+
+Convenience class over media like photos or documents, which supports accessing the attributes in a more convenient way.
+
+If any of the attributes are not present in the current media, the properties will be None.
+
+The original media is available through the media attribute.
+
+__weakref__
+list of weak references to the object
+property duration
+The duration in seconds of the audio or video.
+property emoji
+A string with all emoji that represent the current sticker.
+property ext
+The extension from the mime type of this file.
+
+If the mime type is unknown, the extension from the file name (if any) will be used.
+property height
+The height in pixels of this media if it’s a photo or a video.
+property id
+The old bot-API style file_id representing this file.
+
+Warning
+
+This feature has not been maintained for a long time and may not work. It will be removed in future versions.
+Note
+
+This file ID may not work under user accounts, but should still be usable by bot accounts.
+
+You can, however, still use it to identify a file in for example a database.
+property mime_type
+The mime-type of this file.
+ 
+property name
+The file name of this document.
+property performer
+The performer of the song.
+property size
+The size in bytes of this file.
+
+For photos, this is the heaviest thumbnail, as it often repressents the largest dimensions.
+property sticker_set
+The InputStickerSet to which the sticker file belongs.
+ 
+property title
+The title of the song.
+property width
+The width in pixels of this media if it’s a photo or a video.
